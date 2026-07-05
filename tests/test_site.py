@@ -104,3 +104,32 @@ def test_local_site_generator_escapes_html(tmp_path) -> None:
 
     assert "<script>alert" not in html
     assert "alert(&#x27;x&#x27;) 中文标题" in html
+
+
+def test_local_site_generator_limits_value_and_summary_by_chinese_characters(tmp_path) -> None:
+    generator = LocalSiteGenerator(tmp_path)
+    item = make_item(
+        "mixed",
+        title="Mixed item",
+        score=8.8,
+        published_at=datetime(2026, 7, 4, 9, 0, tzinfo=timezone.utc),
+    )
+    item.personal_reason_zh = (
+        "MCP Server集成和Agent Workflow设计可直接参考用于Echo自动化流程"
+    )
+    item.metadata["detailed_summary_zh"] = (
+        "Cloudflare开源agentic-inbox项目，完整展示MCP Server、"
+        "AI Agent和邮件自动化工作流如何落地"
+    )
+
+    output = generator.write(
+        [item],
+        date="2026-07-04",
+        total_items=1,
+        generated_at=datetime(2026, 7, 4, 10, 30, tzinfo=timezone.utc),
+    )
+
+    html = output.read_text(encoding="utf-8")
+
+    assert "MCP Server集成和Agent Workflow设计可直接参考用于Echo自动化流程" in html
+    assert "Cloudflare开源agentic-inbox项目，完整展示MCP Server、AI Agent和邮件自动化工作流如何落地" in html

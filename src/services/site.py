@@ -608,7 +608,7 @@ class LocalSiteGenerator:
         detail = _best_detail(item)
         if detail == title:
             detail = _best_detail(item, skip_title=True)
-        detail = _clip(detail, 50)
+        detail = _clip_by_cjk(detail, 50, fallback_limit=150)
         source = _source_label(item)
         category = _category_label(item)
         published = _format_datetime(item.published_at, self.timezone)
@@ -746,7 +746,7 @@ def _personal_note_html(item: ContentItem) -> str:
     if not reason:
         return ""
 
-    body = _short_sentence(reason, 30)
+    body = _short_sentence(reason, 30, fallback_limit=90)
 
     return f'<p class="personal-note"><strong>价值点：</strong>{escape(body)}</p>'
 
@@ -783,6 +783,29 @@ def _clip(value: str, limit: int) -> str:
     if len(cleaned) <= limit:
         return cleaned
     return cleaned[:limit].rstrip() + "..."
+
+
+def _clip_by_cjk(value: str, cjk_limit: int, *, fallback_limit: int) -> str:
+    cleaned = _clean_text(value)
+    if _cjk_count(cleaned) > cjk_limit:
+        clipped = []
+        cjk_seen = 0
+        for char in cleaned:
+            if _is_cjk(char):
+                cjk_seen += 1
+            if cjk_seen > cjk_limit:
+                break
+            clipped.append(char)
+        return "".join(clipped).rstrip() + "..."
+    return _clip(cleaned, fallback_limit)
+
+
+def _cjk_count(value: str) -> int:
+    return sum(1 for char in value if _is_cjk(char))
+
+
+def _is_cjk(char: str) -> bool:
+    return "\u4e00" <= char <= "\u9fff"
 
 
 def _source_label(item: ContentItem) -> str:
@@ -876,10 +899,10 @@ def _localized_label(value: str) -> str:
     return value.replace("-", " ").title()
 
 
-def _short_sentence(value: str, limit: int) -> str:
+def _short_sentence(value: str, limit: int, *, fallback_limit: int) -> str:
     cleaned = _clean_text(value)
     for delimiter in ("。", "！", "？", ";", "；", ".", "!", "?"):
         if delimiter in cleaned:
             cleaned = cleaned.split(delimiter, 1)[0]
             break
-    return _clip(cleaned, limit)
+    return _clip_by_cjk(cleaned, limit, fallback_limit=fallback_limit)
