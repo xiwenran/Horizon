@@ -17,6 +17,8 @@ from ..models import ContentItem, SourceType, TwitterConfig
 logger = logging.getLogger(__name__)
 
 _USER_POST_ENDPOINT = "/api/v1/twitter/web/fetch_user_post_tweet"
+_USER_PROFILE_ENDPOINT = "/api/v1/twitter/web/fetch_user_profile"
+_SCREEN_NAME_FALLBACK_STATUS_CODES = {400}
 
 
 class TikHubTwitterScraper(BaseScraper):
@@ -80,30 +82,89 @@ class TikHubTwitterScraper(BaseScraper):
         return ""
 
     async def _fetch_user_posts(self, api_key: str, screen_name: str) -> dict[str, Any]:
+        payload, status_code = await self._request_tikhub(
+            api_key,
+            _USER_POST_ENDPOINT,
+            {"screen_name": screen_name},
+            f"posts for @{screen_name}",
+        )
+        if payload or status_code == 402:
+            return payload
+        if status_code not in _SCREEN_NAME_FALLBACK_STATUS_CODES:
+            return {}
+
+        rest_id = await self._fetch_user_rest_id(api_key, screen_name)
+        if not rest_id:
+            return {}
+
+        payload, _ = await self._request_tikhub(
+            api_key,
+            _USER_POST_ENDPOINT,
+            {"rest_id": rest_id},
+            f"posts for @{screen_name} via rest_id",
+        )
+        return payload
+
+    async def _fetch_user_rest_id(self, api_key: str, screen_name: str) -> Optional[str]:
+        payload, status_code = await self._request_tikhub(
+            api_key,
+            _USER_PROFILE_ENDPOINT,
+            {"screen_name": screen_name},
+            f"profile for @{screen_name}",
+        )
+        if not payload or status_code == 402:
+            return None
+
+        for value in self._find_key_values(payload.get("data", payload), "rest_id"):
+            rest_id = str(value)
+            if rest_id.isdigit():
+                return rest_id
+        return None
+
+    async def _request_tikhub(
+        self,
+        api_key: str,
+        endpoint: str,
+        params: dict[str, Any],
+        label: str,
+    ) -> tuple[dict[str, Any], Optional[int]]:
         base_url = self.config.tikhub_base_url.rstrip("/")
-        url = f"{base_url}{_USER_POST_ENDPOINT}"
+        url = f"{base_url}{endpoint}"
         try:
             response = await self.client.get(
                 url,
-                params={"screen_name": screen_name},
+                params=params,
                 headers={"Authorization": f"Bearer {api_key}"},
                 timeout=30.0,
             )
             response.raise_for_status()
             payload = response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.warning("Error fetching TikHub %s: %s", label, exc)
+            return {}, exc.response.status_code
         except Exception as exc:
-            logger.warning("Error fetching TikHub posts for @%s: %s", screen_name, exc)
-            return {}
+            logger.warning("Error fetching TikHub %s: %s", label, exc)
+            return {}, None
 
         if payload.get("code") not in (None, 200):
             logger.warning(
-                "TikHub returned code %s for @%s: %s",
+                "TikHub returned code %s for %s: %s",
                 payload.get("code"),
-                screen_name,
+                label,
                 payload.get("message_zh") or payload.get("message"),
             )
-            return {}
-        return payload
+            return {}, response.status_code
+        return payload, response.status_code
+
+    def _find_key_values(self, value: Any, key: str) -> Iterable[Any]:
+        if isinstance(value, dict):
+            if key in value:
+                yield value[key]
+            for nested in value.values():
+                yield from self._find_key_values(nested, key)
+        elif isinstance(value, list):
+            for entry in value:
+                yield from self._find_key_values(entry, key)
 
     def _parse_payload(
         self,
@@ -155,11 +216,13 @@ class TikHubTwitterScraper(BaseScraper):
     @staticmethod
     def _looks_like_tweet(value: dict[str, Any]) -> bool:
         legacy = value.get("legacy")
-        return isinstance(legacy, dict) and bool(
+        legacy_shape = isinstance(legacy, dict) and bool(
             value.get("rest_id") or legacy.get("id_str") or legacy.get("id")
-        ) and bool(
-            legacy.get("created_at") or value.get("created_at")
+        ) and bool(legacy.get("created_at") or value.get("created_at"))
+        flat_shape = bool(
+            value.get("tweet_id") and value.get("created_at") and value.get("text")
         )
+        return legacy_shape or flat_shape
 
     def _parse_tweet(
         self,
@@ -169,7 +232,13 @@ class TikHubTwitterScraper(BaseScraper):
     ) -> Optional[ContentItem]:
         try:
             legacy = tweet.get("legacy") or {}
-            tweet_id = str(tweet.get("rest_id") or legacy.get("id_str") or legacy.get("id") or "")
+            tweet_id = str(
+                tweet.get("rest_id")
+                or legacy.get("id_str")
+                or legacy.get("id")
+                or tweet.get("tweet_id")
+                or ""
+            )
             if not tweet_id:
                 return None
 
@@ -189,7 +258,11 @@ class TikHubTwitterScraper(BaseScraper):
 
             views = tweet.get("views") or {}
             view_count = views.get("count") if isinstance(views, dict) else None
-            conversation_id = str(legacy.get("conversation_id_str") or tweet_id)
+            conversation_id = str(
+                legacy.get("conversation_id_str")
+                or tweet.get("conversation_id")
+                or tweet_id
+            )
 
             return ContentItem(
                 id=self._generate_id(SourceType.TWITTER.value, "tweet", tweet_id),
@@ -202,11 +275,11 @@ class TikHubTwitterScraper(BaseScraper):
                 metadata={
                     "tweet_id": tweet_id,
                     "conversation_id": conversation_id,
-                    "favorite_count": legacy.get("favorite_count", 0),
-                    "retweet_count": legacy.get("retweet_count", 0),
-                    "reply_count": legacy.get("reply_count", 0),
-                    "quote_count": legacy.get("quote_count", 0),
-                    "bookmark_count": legacy.get("bookmark_count", 0),
+                    "favorite_count": legacy.get("favorite_count", tweet.get("favorites", 0)),
+                    "retweet_count": legacy.get("retweet_count", tweet.get("retweets", 0)),
+                    "reply_count": legacy.get("reply_count", tweet.get("replies", 0)),
+                    "quote_count": legacy.get("quote_count", tweet.get("quotes", 0)),
+                    "bookmark_count": legacy.get("bookmark_count", tweet.get("bookmarks", 0)),
                     "view_count": view_count,
                     "is_reply": bool(legacy.get("in_reply_to_status_id_str")),
                     "in_reply_to_status_id": legacy.get("in_reply_to_status_id_str"),
@@ -243,6 +316,12 @@ class TikHubTwitterScraper(BaseScraper):
 
     @staticmethod
     def _extract_author(tweet: dict[str, Any], fallback_screen_name: str) -> tuple[str, str]:
+        flat_author = tweet.get("author")
+        if isinstance(flat_author, dict):
+            screen_name = str(flat_author.get("screen_name") or fallback_screen_name).lstrip("@")
+            author = str(flat_author.get("name") or screen_name)
+            return screen_name, author
+
         user_result = ((tweet.get("core") or {}).get("user_results") or {}).get("result") or {}
         user_legacy = user_result.get("legacy") if isinstance(user_result, dict) else None
         if not isinstance(user_legacy, dict):

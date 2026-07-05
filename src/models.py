@@ -434,6 +434,15 @@ class FilteringConfig(BaseModel):
     default_group_limit: Optional[int] = Field(default=None, gt=0)
 
 
+class ObsidianExportConfig(BaseModel):
+    """Local Obsidian export for highly personally relevant items."""
+
+    enabled: bool = False
+    vault_path: str = "~/Obsidian/PersonalWiki"
+    relative_dir: str = "决策/行业动态/Horizon信息雷达"
+    personal_score_threshold: float = Field(default=8.0, ge=0.0, le=10.0)
+
+
 class Config(BaseModel):
     """Main configuration model."""
 
@@ -443,3 +452,4 @@ class Config(BaseModel):
     filtering: FilteringConfig
     email: Optional[EmailConfig] = None
     webhook: Optional[WebhookConfig] = None
+    obsidian: Optional[ObsidianExportConfig] = None

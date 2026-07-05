@@ -608,7 +608,7 @@ class LocalSiteGenerator:
         detail = _best_detail(item)
         if detail == title:
             detail = _best_detail(item, skip_title=True)
-        detail = _clip(detail, 190)
+        detail = _clip(detail, 50)
         source = _source_label(item)
         category = _category_label(item)
         published = _format_datetime(item.published_at, self.timezone)
@@ -631,8 +631,8 @@ class LocalSiteGenerator:
             <span>评分 {escape(score)}</span>
           </div>
           <h2><a href="{escape(str(item.url), quote=True)}" target="_blank" rel="noopener noreferrer">{escape(_clip(title, 118))}</a></h2>
-          <p class="summary">{escape(detail)}</p>
           {personal_note_html}
+          <p class="summary">{escape(detail)}</p>
           <div class="footer-row">
             {tags_html}
             <a class="open-link" href="{escape(str(item.url), quote=True)}" target="_blank" rel="noopener noreferrer">打开原文</a>
@@ -746,17 +746,9 @@ def _personal_note_html(item: ContentItem) -> str:
     if not reason:
         return ""
 
-    score = ""
-    if item.personal_score is not None:
-        score = f"匹配 {item.personal_score:.1f} · "
+    body = _short_sentence(reason, 30)
 
-    action = _first_chinese_text(item.suggested_action_zh)
-    if action and action != reason:
-        body = f"{score}{reason} 建议：{action}"
-    else:
-        body = f"{score}{reason}"
-
-    return f'<p class="personal-note"><strong>对你有用：</strong>{escape(_clip(body, 150))}</p>'
+    return f'<p class="personal-note"><strong>价值点：</strong>{escape(body)}</p>'
 
 
 def _metadata_text(metadata: dict, *keys: str) -> str:
@@ -818,7 +810,7 @@ def _category_label(item: ContentItem) -> str:
 
 
 def _tags(item: ContentItem) -> list[str]:
-    raw_tags: Iterable[object] = item.ai_tags or item.metadata.get("tags") or []
+    raw_tags: Iterable[object] = [*(item.ai_tags or []), *(item.metadata.get("tags") or [])]
     tags: list[str] = []
     for raw_tag in raw_tags:
         tag = _localized_label(_clean_text(str(raw_tag)))
@@ -833,7 +825,16 @@ def _localized_label(value: str) -> str:
     normalized = value.strip().lower().replace("_", "-")
     labels = {
         "ai": "AI",
+        "ai-tools": "AI 工具",
+        "ai-assisted-development": "AI 辅助开发",
+        "agent": "智能体",
+        "agent-architecture": "智能体架构",
+        "base-ui": "Base UI",
+        "claude": "Claude",
+        "component-libraries": "组件库",
+        "community-driven": "社区驱动",
         "ml": "机器学习",
+        "llm": "大模型",
         "x": "X",
         "rss": "RSS",
         "x-rss": "X 订阅",
@@ -851,9 +852,19 @@ def _localized_label(value: str) -> str:
         "startup": "创业",
         "product": "产品",
         "growth": "增长",
+        "governance": "治理",
+        "navigation": "导航",
+        "openstreetmap": "开放地图",
         "research": "研究",
+        "react": "React",
+        "release": "发布",
+        "schema-design": "Schema 设计",
         "security": "安全",
+        "shadcn-ui": "Shadcn UI",
+        "sqlite": "SQLite",
+        "sqlite-utils": "SQLite 工具",
         "tool": "工具",
+        "tool-calling": "工具调用",
         "tools": "工具",
         "open-source": "开源",
         "opensource": "开源",
@@ -863,3 +874,12 @@ def _localized_label(value: str) -> str:
     if _has_cjk(value):
         return value
     return value.replace("-", " ").title()
+
+
+def _short_sentence(value: str, limit: int) -> str:
+    cleaned = _clean_text(value)
+    for delimiter in ("。", "！", "？", ";", "；", ".", "!", "?"):
+        if delimiter in cleaned:
+            cleaned = cleaned.split(delimiter, 1)[0]
+            break
+    return _clip(cleaned, limit)

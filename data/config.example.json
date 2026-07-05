@@ -177,5 +177,11 @@
       }
     },
     "headers": ""
+  },
+  "obsidian": {
+    "enabled": false,
+    "vault_path": "~/Obsidian/PersonalWiki",
+    "relative_dir": "决策/行业动态/Horizon信息雷达",
+    "personal_score_threshold": 8.0
   }
 }

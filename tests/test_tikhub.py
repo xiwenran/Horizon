@@ -148,3 +148,98 @@ def test_reads_api_key_from_configured_env_file(tmp_path, monkeypatch):
     asyncio.run(client.aclose())
 
     assert result == []
+
+
+def test_falls_back_to_rest_id_when_screen_name_posts_fail(monkeypatch):
+    monkeypatch.setenv("TIKHUB_API_KEY", "test-key")
+    seen_paths: list[tuple[str, str]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_paths.append((request.url.path, str(request.url.query, encoding="utf-8")))
+        if request.url.path == "/api/v1/twitter/web/fetch_user_post_tweet":
+            if "screen_name=GitTrend0x" in str(request.url.query, encoding="utf-8"):
+                return httpx.Response(400, json={"detail": {"code": 400}})
+            assert "rest_id=1536620289123295232" in str(request.url.query, encoding="utf-8")
+            return httpx.Response(
+                200,
+                json={"code": 200, "data": {"items": [_tweet("42", "Rest id tweet")]}}
+            )
+        if request.url.path == "/api/v1/twitter/web/fetch_user_profile":
+            return httpx.Response(
+                200,
+                json={"code": 200, "data": {"user": {"rest_id": "1536620289123295232"}}},
+            )
+        return httpx.Response(404)
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.AsyncClient(transport=transport)
+    scraper = TikHubTwitterScraper(_config(), client)
+
+    result = asyncio.run(scraper.fetch(datetime.now(timezone.utc) - timedelta(hours=1)))
+    asyncio.run(client.aclose())
+
+    assert len(result) == 1
+    assert result[0].id == "twitter:tweet:42"
+    assert seen_paths[0][0] == "/api/v1/twitter/web/fetch_user_post_tweet"
+    assert seen_paths[1][0] == "/api/v1/twitter/web/fetch_user_profile"
+    assert seen_paths[2][0] == "/api/v1/twitter/web/fetch_user_post_tweet"
+
+
+def test_does_not_fallback_to_rest_id_for_terminal_post_errors(monkeypatch):
+    monkeypatch.setenv("TIKHUB_API_KEY", "test-key")
+    seen_paths: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_paths.append(request.url.path)
+        if request.url.path == "/api/v1/twitter/web/fetch_user_post_tweet":
+            return httpx.Response(429, json={"detail": {"code": 429}})
+        return httpx.Response(500)
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.AsyncClient(transport=transport)
+    scraper = TikHubTwitterScraper(_config(), client)
+
+    result = asyncio.run(scraper.fetch(datetime.now(timezone.utc) - timedelta(hours=1)))
+    asyncio.run(client.aclose())
+
+    assert result == []
+    assert seen_paths == ["/api/v1/twitter/web/fetch_user_post_tweet"]
+
+
+def test_parses_flat_tikhub_tweet_shape(monkeypatch):
+    monkeypatch.setenv("TIKHUB_API_KEY", "test-key")
+    created = datetime.now(timezone.utc).isoformat()
+    payload = {
+        "code": 200,
+        "data": {
+            "timeline": [
+                {
+                    "tweet_id": "flat-1",
+                    "created_at": created,
+                    "text": "Flat TikHub tweet",
+                    "favorites": 21,
+                    "retweets": 5,
+                    "replies": 2,
+                    "quotes": 1,
+                    "bookmarks": 3,
+                    "author": {"screen_name": "XDevelopers", "name": "X Developers"},
+                }
+            ]
+        },
+    }
+
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, json=payload))
+    client = httpx.AsyncClient(transport=transport)
+    scraper = TikHubTwitterScraper(
+        _config(users=["XDevelopers"], user_categories={"XDevelopers": "x-ai-dev"}),
+        client,
+    )
+
+    result = asyncio.run(scraper.fetch(datetime.now(timezone.utc) - timedelta(hours=1)))
+    asyncio.run(client.aclose())
+
+    assert len(result) == 1
+    assert result[0].id == "twitter:tweet:flat-1"
+    assert str(result[0].url) == "https://twitter.com/XDevelopers/status/flat-1"
+    assert result[0].metadata["favorite_count"] == 21
+    assert result[0].author == "X Developers"

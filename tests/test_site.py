@@ -32,7 +32,7 @@ def make_item(
         ai_summary=f"{title} 的中文摘要",
         ai_tags=["X", "RSS"],
         personal_score=8.8,
-        personal_reason_zh="这条内容能帮助你优化 Horizon 的信息源筛选。",
+        personal_reason_zh="优化信息源筛选策略。",
         suggested_action_zh="加入下一轮抓取策略复盘。",
     )
 
@@ -78,8 +78,10 @@ def test_local_site_generator_writes_index(tmp_path) -> None:
     assert "backdrop-filter: blur(24px)" in html
     assert "translateY(-7px)" in html
     assert "cardIn 700ms" in html
-    assert "对你有用" in html
-    assert "匹配 8.8" in html
+    assert "价值点" in html
+    assert "匹配 8.8" not in html
+    assert html.index("Higher score 中文标题") < html.index("价值点") < html.index("Higher score 的中文摘要")
+    assert "抓取" in html
 
 
 def test_local_site_generator_escapes_html(tmp_path) -> None:

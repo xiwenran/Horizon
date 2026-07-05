@@ -15,6 +15,7 @@ from .storage.manager import StorageManager
 from .services.email import EmailManager
 from .services.webhook import WebhookNotifier
 from .services.site import LocalSiteGenerator
+from .services.obsidian_export import ObsidianExporter
 from .scrapers.github import GitHubScraper
 from .scrapers.hackernews import HackerNewsScraper
 from .scrapers.rss import RSSScraper
@@ -158,6 +159,7 @@ class HorizonOrchestrator:
             today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
             self._update_local_site(important_items, today, len(all_items))
+            self._export_to_obsidian(important_items, today)
 
             # 7. Generate and save daily summaries for each configured language
             for lang in self.config.ai.languages:
@@ -380,6 +382,25 @@ class HorizonOrchestrator:
             self.console.print(f"🌐 Updated local site: {site_path}\n")
         except Exception as e:
             self.console.print(f"[yellow]⚠️  Failed to update local site: {e}[/yellow]\n")
+
+    def _export_to_obsidian(
+        self,
+        important_items: List[ContentItem],
+        date: str,
+    ) -> None:
+        """Write high personal relevance items to the local Obsidian vault."""
+        config = self.config.obsidian
+        if not config or not config.enabled:
+            return
+
+        try:
+            output_path = ObsidianExporter(config).write(important_items, date=date)
+            if output_path:
+                self.console.print(f"📝 Exported high-value items to Obsidian: {output_path}\n")
+            else:
+                self.console.print("📝 No items met the Obsidian export threshold\n")
+        except Exception as e:
+            self.console.print(f"[yellow]⚠️  Failed to export Obsidian note: {e}[/yellow]\n")
 
     @staticmethod
     def _sub_source_label(item: ContentItem) -> str:
