@@ -42,6 +42,7 @@ data/config.json
 data/seen.json
 data/summaries/*.md
 data/subscribers.json
+data/personal_profile.md
 data/mcp.secrets.json
 data/mcp-secrets.json
 data/mcp-runs/

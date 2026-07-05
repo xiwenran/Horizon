@@ -3,6 +3,7 @@
 import asyncio
 import json
 import re
+from pathlib import Path
 from typing import List, Optional
 from tenacity import retry, stop_after_attempt, wait_exponential
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, MofNCompleteColumn
@@ -20,6 +21,7 @@ class ContentAnalyzer:
 
     def __init__(self, ai_client: AIClient):
         self.client = ai_client
+        self.personal_profile = self._load_personal_profile()
 
     @staticmethod
     def _parse_json_response(response: str) -> Optional[dict]:
@@ -40,6 +42,23 @@ class ContentAnalyzer:
         config = getattr(self.client, "config", None)
         concurrency = getattr(config, "analysis_concurrency", 1)
         return max(concurrency, 1)
+
+    def _load_personal_profile(self) -> str:
+        """Load the compact reader profile that is safe to send to the AI model."""
+        config = getattr(self.client, "config", None)
+        profile_path = getattr(config, "personal_profile_path", None)
+        if not profile_path:
+            return ""
+
+        path = Path(str(profile_path)).expanduser()
+        if not path.is_absolute():
+            path = Path.cwd() / path
+        try:
+            profile = path.read_text(encoding="utf-8").strip()
+        except OSError:
+            return ""
+
+        return profile[:5000]
 
     async def analyze_batch(self, items: List[ContentItem]) -> List[ContentItem]:
         throttle_sec = self._get_throttle_sec()
@@ -136,7 +155,8 @@ class ContentAnalyzer:
             author=item.author or "Unknown",
             url=str(item.url),
             content_section=content_section,
-            discussion_section=discussion_section
+            discussion_section=discussion_section,
+            personal_profile_section=self.personal_profile or "Not provided.",
         )
 
         # Get AI completion
@@ -160,3 +180,16 @@ class ContentAnalyzer:
         item.ai_reason = result.get("reason", "")
         item.ai_summary = result.get("summary", item.title)
         item.ai_tags = result.get("tags", [])
+        item.personal_score = _optional_score(result.get("personal_score"))
+        item.personal_reason_zh = result.get("personal_reason_zh") or ""
+        item.suggested_action_zh = result.get("suggested_action_zh") or ""
+
+
+def _optional_score(value) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return None
+    return max(0.0, min(score, 10.0))

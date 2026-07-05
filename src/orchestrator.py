@@ -112,13 +112,20 @@ class HorizonOrchestrator:
             threshold = self.config.filtering.ai_score_threshold
             important_items = [
                 item for item in analyzed_items
-                if item.ai_score and item.ai_score >= threshold
+                if self._passes_item_filter(item)
             ]
-            important_items.sort(key=lambda x: x.ai_score or 0, reverse=True)
+            important_items.sort(key=self._rank_score, reverse=True)
 
-            self.console.print(
-                f"⭐️ {len(important_items)} items scored ≥ {threshold}\n"
-            )
+            personal_threshold = self.config.filtering.personal_score_threshold
+            if personal_threshold is None:
+                self.console.print(
+                    f"⭐️ {len(important_items)} items scored ≥ {threshold}\n"
+                )
+            else:
+                self.console.print(
+                    f"⭐️ {len(important_items)} items passed content ≥ {threshold} "
+                    f"or personal ≥ {personal_threshold}\n"
+                )
 
             # 5.5 Semantic deduplication: drop items covering the same topic
             deduped_items = await self.merge_topic_duplicates(important_items)
@@ -548,7 +555,7 @@ class HorizonOrchestrator:
 
         sorted_items = sorted(
             items,
-            key=lambda item: item.ai_score or 0,
+            key=self._rank_score,
             reverse=True,
         )
 
@@ -636,6 +643,24 @@ class HorizonOrchestrator:
             group_limits=group_limits,
             duplicate_categories=sorted(set(duplicate_categories)),
         )
+
+    def _passes_item_filter(self, item: ContentItem) -> bool:
+        ai_score = item.ai_score or 0
+        if ai_score >= self.config.filtering.ai_score_threshold:
+            return True
+
+        personal_threshold = self.config.filtering.personal_score_threshold
+        if personal_threshold is None or item.personal_score is None:
+            return False
+        return item.personal_score >= personal_threshold
+
+    def _rank_score(self, item: ContentItem) -> float:
+        ai_score = item.ai_score or 0
+        if item.personal_score is None:
+            return ai_score
+
+        weight = getattr(self.config.ai, "personal_score_weight", 0.4)
+        return ai_score * (1 - weight) + item.personal_score * weight
 
     async def _expand_twitter_discussion(self, items: List[ContentItem]) -> None:
         """Second-stage: fetch reply text for important Twitter items and re-analyze.

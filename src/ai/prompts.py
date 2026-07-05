@@ -57,6 +57,11 @@ Consider:
 - Relevance to software engineering, AI/ML, and systems research
 - Community discussion quality: insightful comments, diverse viewpoints, and debates increase value
 - Engagement signals: high upvotes/favorites with substantive discussion indicate community-validated importance
+
+If a reader profile is provided, also score how useful the item is for that reader.
+This is separate from general importance: a niche item can be personally valuable if
+it helps the reader's current projects, business, content ideas, automation workflows,
+or known learning goals. Personal reason and action fields must be Simplified Chinese.
 """
 
 CONTENT_ANALYSIS_USER = """Analyze the following content and provide a JSON response with:
@@ -64,6 +69,9 @@ CONTENT_ANALYSIS_USER = """Analyze the following content and provide a JSON resp
 - reason: Brief explanation for the score (mention discussion quality if comments are provided)
 - summary: One-sentence summary of the content
 - tags: Relevant topic tags (3-5 tags)
+- personal_score (0-10 or null): How relevant/useful this is to the reader profile
+- personal_reason_zh: Why this helps or does not help the reader, in Simplified Chinese
+- suggested_action_zh: A concrete next action for the reader, in Simplified Chinese
 
 Content:
 Title: {title}
@@ -73,12 +81,18 @@ URL: {url}
 {content_section}
 {discussion_section}
 
+Reader profile summary:
+{personal_profile_section}
+
 Respond with valid JSON only:
 {{
   "score": <number>,
   "reason": "<explanation>",
   "summary": "<one-sentence-summary>",
-  "tags": ["<tag1>", "<tag2>", ...]
+  "tags": ["<tag1>", "<tag2>", ...],
+  "personal_score": <number-or-null>,
+  "personal_reason_zh": "<中文说明；没有画像时为空字符串>",
+  "suggested_action_zh": "<中文行动建议；没有画像或不相关时为空字符串>"
 }}"""
 
 CONCEPT_EXTRACTION_SYSTEM = """You identify technical concepts in news that a reader might not know.

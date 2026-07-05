@@ -39,6 +39,9 @@ class ContentItem(BaseModel):
     ai_reason: Optional[str] = None
     ai_summary: Optional[str] = None
     ai_tags: List[str] = Field(default_factory=list)
+    personal_score: Optional[float] = None  # 0-10 relevance to the reader profile
+    personal_reason_zh: Optional[str] = None
+    suggested_action_zh: Optional[str] = None
 
 
 class AIProvider(str, Enum):
@@ -110,6 +113,8 @@ class AIConfig(BaseModel):
     analysis_concurrency: int = 1
     enrichment_concurrency: int = 1
     languages: List[str] = Field(default_factory=lambda: ["en"])
+    personal_profile_path: Optional[str] = None
+    personal_score_weight: float = Field(default=0.4, ge=0.0, le=1.0)
     # Azure OpenAI specific; required when provider == AZURE
     azure_endpoint_env: Optional[str] = None
     api_version: Optional[str] = None
@@ -421,6 +426,7 @@ class FilteringConfig(BaseModel):
     """Content filtering configuration."""
 
     ai_score_threshold: float = 7.0
+    personal_score_threshold: Optional[float] = Field(default=None, ge=0.0, le=10.0)
     time_window_hours: int = 24
     max_items: Optional[int] = Field(default=None, gt=0)
     category_groups: Dict[str, CategoryGroupConfig] = Field(default_factory=dict)

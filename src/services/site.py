@@ -78,7 +78,7 @@ class LocalSiteGenerator:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>视野日报 - {escape(display_date)}</title>
+  <title>{escape(display_date)} 信息简报</title>
   <style>
     :root {{
       --paper: #f5f7fb;
@@ -145,9 +145,7 @@ class LocalSiteGenerator:
       top: 0;
       z-index: 5;
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 28px;
-      align-items: end;
+      justify-items: center;
       padding: 28px 0 30px;
       border-bottom: 1px solid rgba(21, 32, 50, 0.08);
       background: linear-gradient(180deg, rgba(250, 252, 255, 0.9), rgba(250, 252, 255, 0.64));
@@ -182,6 +180,7 @@ class LocalSiteGenerator:
       line-height: 1.04;
       font-weight: 800;
       letter-spacing: 0;
+      text-align: center;
       background: linear-gradient(95deg, #101828 0, #1d4ed8 43%, #9b3f7f 86%);
       -webkit-background-clip: text;
       background-clip: text;
@@ -197,37 +196,37 @@ class LocalSiteGenerator:
     }}
 
     .stats {{
-      min-width: 236px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      border: 1px solid rgba(255, 255, 255, 0.76);
-      border-radius: 8px;
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 16px;
+      border: 0;
+      border-radius: 999px;
       overflow: hidden;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(246, 249, 255, 0.62));
+      background: transparent;
       box-shadow: 0 18px 44px rgba(28, 39, 64, 0.1);
       backdrop-filter: blur(20px) saturate(1.3);
       -webkit-backdrop-filter: blur(20px) saturate(1.3);
     }}
 
     .stat {{
-      padding: 14px 16px;
-      border-right: 1px solid rgba(21, 32, 50, 0.08);
-    }}
-
-    .stat:nth-child(2n) {{
-      border-right: 0;
+      display: inline-flex;
+      gap: 7px;
+      align-items: baseline;
+      padding: 8px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
     }}
 
     .stat span {{
-      display: block;
       color: var(--muted);
       font-size: 0.78rem;
       line-height: 1.4;
     }}
 
     .stat strong {{
-      display: block;
-      margin-top: 4px;
       font-size: 1rem;
       line-height: 1.35;
       font-weight: 800;
@@ -413,6 +412,20 @@ class LocalSiteGenerator:
       line-height: 1.82;
     }}
 
+    .personal-note {{
+      margin: 14px 0 0;
+      padding: 10px 12px;
+      border: 1px solid color-mix(in srgb, var(--accent) 22%, #ffffff);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--accent) 8%, #ffffff);
+      color: #344054;
+      line-height: 1.68;
+    }}
+
+    .personal-note strong {{
+      color: color-mix(in srgb, var(--accent) 74%, #111827);
+    }}
+
     .footer-row {{
       display: flex;
       flex-wrap: wrap;
@@ -528,8 +541,6 @@ class LocalSiteGenerator:
       }}
 
       .masthead {{
-        grid-template-columns: 1fr;
-        align-items: start;
         position: static;
       }}
 
@@ -557,6 +568,10 @@ class LocalSiteGenerator:
         font-size: 1.04rem;
       }}
 
+      .personal-note {{
+        padding: 9px 10px;
+      }}
+
       .open-link {{
         width: 100%;
         margin-left: 0;
@@ -568,11 +583,7 @@ class LocalSiteGenerator:
 <body>
   <main class="page">
     <header class="masthead">
-      <div>
-        <p class="brand">视野日报</p>
-        <h1>{escape(display_date)} 信息简报</h1>
-        <p class="lead">从订阅源里挑出值得看的更新，整理成中文摘要，保留来源和原文入口，适合每天快速扫一遍。</p>
-      </div>
+      <h1>{escape(display_date)} 信息简报</h1>
       <aside class="stats" aria-label="日报统计">
         <div class="stat">
           <span>精选</span>
@@ -605,6 +616,7 @@ class LocalSiteGenerator:
         tags = _tags(item)
         tags_html = "\n".join(f'<span class="tag">{escape(tag)}</span>' for tag in tags)
         category_html = f'<span class="category">{escape(category)}</span>' if category else ""
+        personal_note_html = _personal_note_html(item)
 
         return f"""
       <article class="story" style="--i: {index}">
@@ -620,6 +632,7 @@ class LocalSiteGenerator:
           </div>
           <h2><a href="{escape(str(item.url), quote=True)}" target="_blank" rel="noopener noreferrer">{escape(_clip(title, 118))}</a></h2>
           <p class="summary">{escape(detail)}</p>
+          {personal_note_html}
           <div class="footer-row">
             {tags_html}
             <a class="open-link" href="{escape(str(item.url), quote=True)}" target="_blank" rel="noopener noreferrer">打开原文</a>
@@ -647,7 +660,10 @@ def _sort_items(items: Sequence[ContentItem]) -> list[ContentItem]:
 
 
 def _score(item: ContentItem) -> float:
-    return item.ai_score if item.ai_score is not None else -1.0
+    ai_score = item.ai_score if item.ai_score is not None else -1.0
+    if item.personal_score is None:
+        return ai_score
+    return ai_score * 0.6 + item.personal_score * 0.4
 
 
 def _timestamp(value: datetime) -> float:
@@ -723,6 +739,24 @@ def _best_detail(item: ContentItem, *, skip_title: bool = False) -> str:
         return detail
 
     return "原文内容较短，建议打开原文查看图片或上下文。"
+
+
+def _personal_note_html(item: ContentItem) -> str:
+    reason = _first_chinese_text(item.personal_reason_zh, item.suggested_action_zh)
+    if not reason:
+        return ""
+
+    score = ""
+    if item.personal_score is not None:
+        score = f"匹配 {item.personal_score:.1f} · "
+
+    action = _first_chinese_text(item.suggested_action_zh)
+    if action and action != reason:
+        body = f"{score}{reason} 建议：{action}"
+    else:
+        body = f"{score}{reason}"
+
+    return f'<p class="personal-note"><strong>对你有用：</strong>{escape(_clip(body, 150))}</p>'
 
 
 def _metadata_text(metadata: dict, *keys: str) -> str:

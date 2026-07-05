@@ -31,6 +31,9 @@ def make_item(
         ai_reason="值得看，因为它补充了抓取和限流相关线索。",
         ai_summary=f"{title} 的中文摘要",
         ai_tags=["X", "RSS"],
+        personal_score=8.8,
+        personal_reason_zh="这条内容能帮助你优化 Horizon 的信息源筛选。",
+        suggested_action_zh="加入下一轮抓取策略复盘。",
     )
 
 
@@ -60,8 +63,10 @@ def test_local_site_generator_writes_index(tmp_path) -> None:
     html = output.read_text(encoding="utf-8")
 
     assert output == tmp_path / "index.html"
-    assert "视野日报" in html
+    assert "<title>2026.07.04 信息简报</title>" in html
     assert "2026.07.04 信息简报" in html
+    assert '<p class="brand">' not in html
+    assert "从订阅源里挑出值得看的更新" not in html
     assert "2 / 12" in html
     assert html.index("Higher score 中文标题") < html.index("Lower score 中文标题")
     assert "GitTrend0x" in html
@@ -73,6 +78,8 @@ def test_local_site_generator_writes_index(tmp_path) -> None:
     assert "backdrop-filter: blur(24px)" in html
     assert "translateY(-7px)" in html
     assert "cardIn 700ms" in html
+    assert "对你有用" in html
+    assert "匹配 8.8" in html
 
 
 def test_local_site_generator_escapes_html(tmp_path) -> None:

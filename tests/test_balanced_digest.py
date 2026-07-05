@@ -33,7 +33,10 @@ def make_item(item_id: str, score: float, category: str | None) -> ContentItem:
 
 def make_orchestrator(filtering: FilteringConfig) -> HorizonOrchestrator:
     orchestrator = HorizonOrchestrator.__new__(HorizonOrchestrator)
-    orchestrator.config = SimpleNamespace(filtering=filtering)
+    orchestrator.config = SimpleNamespace(
+        filtering=filtering,
+        ai=SimpleNamespace(personal_score_weight=0.4),
+    )
     orchestrator.console = Console(record=True)
     return orchestrator
 
@@ -102,6 +105,27 @@ def test_max_items_works_without_category_groups() -> None:
     result = make_orchestrator(filtering).apply_balanced_digest(items)
 
     assert [item.id for item in result.items] == ["higher"]
+
+
+def test_personal_score_can_include_and_rank_item() -> None:
+    filtering = FilteringConfig(
+        ai_score_threshold=7.0,
+        personal_score_threshold=8.0,
+        max_items=2,
+    )
+    relevant = make_item("personally-relevant", 6.0, None)
+    relevant.personal_score = 10.0
+    generally_high = make_item("generally-high", 8.0, None)
+    low = make_item("low", 6.0, None)
+    orchestrator = make_orchestrator(filtering)
+
+    included = [
+        item for item in [generally_high, relevant, low]
+        if orchestrator._passes_item_filter(item)
+    ]
+    result = orchestrator.apply_balanced_digest(included)
+
+    assert [item.id for item in result.items] == ["generally-high", "personally-relevant"]
 
 
 def test_duplicate_category_warns_and_first_group_wins() -> None:
