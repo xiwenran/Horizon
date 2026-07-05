@@ -168,7 +168,16 @@ class AnthropicClient(AIClient):
                 input_tokens=getattr(usage, "input_tokens", 0),
                 output_tokens=getattr(usage, "output_tokens", 0),
             )
-        return message.content[0].text
+        return self._extract_text_content(message)
+
+    @staticmethod
+    def _extract_text_content(message: Any) -> str:
+        parts = []
+        for block in getattr(message, "content", []):
+            text = getattr(block, "text", None)
+            if text:
+                parts.append(text)
+        return "\n".join(parts)
 
 
 class OpenAIClient(AIClient):
