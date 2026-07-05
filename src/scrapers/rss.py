@@ -73,7 +73,11 @@ class RSSScraper(BaseScraper):
             )
 
             # Fetch feed content
-            response = await self.client.get(feed_url, follow_redirects=True)
+            response = await self.client.get(
+                feed_url,
+                follow_redirects=True,
+                headers={"User-Agent": "Mozilla/5.0 Horizon RSS Reader"},
+            )
             response.raise_for_status()
 
             # Parse feed

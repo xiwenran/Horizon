@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>视野日报 - 2026.07.04</title>
+  <style>
+    :root {
+      --paper: #fbfaf5;
+      --wash: #eef6f1;
+      --ink: #24252a;
+      --muted: #69707c;
+      --faint: #9299a5;
+      --line: #e4ddd1;
+      --card: #ffffff;
+      --teal: #14776f;
+      --blue: #315f9f;
+      --coral: #c85b48;
+      --amber: #af7620;
+      --violet: #755aa9;
+      --mint: #dff3ec;
+      --shadow: 0 24px 70px rgba(63, 58, 49, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(160deg, rgba(238, 246, 241, 0.96) 0, rgba(251, 250, 245, 0.92) 38%, rgba(250, 246, 239, 0.96) 100%),
+        linear-gradient(90deg, rgba(200, 91, 72, 0.055), transparent 34%, rgba(49, 95, 159, 0.06)),
+        var(--paper);
+      color: var(--ink);
+      font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.38;
+      background-image:
+        linear-gradient(rgba(32, 36, 42, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(32, 36, 42, 0.026) 1px, transparent 1px);
+      background-size: 30px 30px;
+      mask-image: linear-gradient(180deg, #000 0, transparent 68%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      position: relative;
+      width: min(100%, 1080px);
+      margin: 0 auto;
+      padding: 46px 22px 76px;
+    }
+
+    .masthead {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: end;
+      padding: 24px 0 26px;
+      border-bottom: 1px solid rgba(107, 94, 72, 0.18);
+      background: linear-gradient(180deg, rgba(251, 250, 245, 0.94), rgba(251, 250, 245, 0.74));
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 16px;
+      color: var(--teal);
+      font-size: 0.84rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .brand::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), var(--coral));
+      box-shadow: 0 0 0 6px rgba(20, 119, 111, 0.1);
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 0;
+      font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+      font-size: 3.42rem;
+      line-height: 1.02;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 660px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.75;
+    }
+
+    .stats {
+      min-width: 236px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: 0 18px 42px rgba(63, 58, 49, 0.08);
+    }
+
+    .stat {
+      padding: 14px 16px;
+      border-right: 1px solid var(--line);
+    }
+
+    .stat:nth-child(2n) {
+      border-right: 0;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1rem;
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .story-list {
+      display: grid;
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .story {
+      --accent: var(--teal);
+      position: relative;
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 18px;
+      min-height: 148px;
+      padding: 22px;
+      border: 1px solid rgba(107, 94, 72, 0.18);
+      border-radius: 18px;
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 24%),
+        rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(14px) scale(0.985);
+      animation: cardIn 620ms cubic-bezier(0.2, 0.9, 0.24, 1) forwards;
+      animation-delay: calc(var(--i) * 52ms);
+      transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+    }
+
+    .story:nth-child(4n + 1) {
+      --accent: var(--teal);
+    }
+
+    .story:nth-child(4n + 2) {
+      --accent: var(--blue);
+    }
+
+    .story:nth-child(4n + 3) {
+      --accent: var(--coral);
+    }
+
+    .story:nth-child(4n) {
+      --accent: var(--amber);
+    }
+
+    .story::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 36%, transparent));
+      opacity: 0.9;
+    }
+
+    .story:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+      box-shadow: 0 28px 80px rgba(63, 58, 49, 0.16);
+    }
+
+    .story:focus-within {
+      outline: 3px solid rgba(52, 104, 183, 0.24);
+      outline-offset: 3px;
+    }
+
+    .story-number {
+      display: grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      border: 1px solid color-mix(in srgb, var(--accent) 26%, #ffffff);
+      border-radius: 50%;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 10%, #ffffff);
+      font-family: "Iowan Old Style", Georgia, serif;
+      font-size: 1.34rem;
+      font-weight: 700;
+      transition: transform 180ms ease, background 180ms ease;
+    }
+
+    .story:hover .story-number {
+      transform: rotate(-4deg) scale(1.04);
+      background: color-mix(in srgb, var(--accent) 14%, #ffffff);
+    }
+
+    .story-main {
+      min-width: 0;
+    }
+
+    .story-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .source {
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .meta-dot {
+      color: var(--faint);
+    }
+
+    .category {
+      padding: 3px 9px;
+      border: 1px solid color-mix(in srgb, var(--accent) 26%, #ffffff);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 10%, #ffffff);
+      color: var(--accent);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      line-height: 1.48;
+      letter-spacing: 0;
+    }
+
+    .summary {
+      margin: 10px 0 0;
+      color: #4f5561;
+      line-height: 1.82;
+    }
+
+    .footer-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 16px;
+    }
+
+    .tag {
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .tag:nth-child(5n + 1) {
+      background: #eaf6f3;
+      color: var(--teal);
+    }
+
+    .tag:nth-child(5n + 2) {
+      background: #fff3e1;
+      color: var(--amber);
+    }
+
+    .tag:nth-child(5n + 3) {
+      background: #f5efff;
+      color: var(--violet);
+    }
+
+    .tag:nth-child(5n + 4) {
+      background: #fdeeea;
+      color: var(--coral);
+    }
+
+    .tag:nth-child(5n) {
+      background: #eef4ff;
+      color: var(--blue);
+    }
+
+    .open-link {
+      margin-left: auto;
+      color: var(--accent);
+      font-size: 0.84rem;
+      font-weight: 800;
+      transition: transform 160ms ease;
+    }
+
+    .open-link::after {
+      content: "→";
+      display: inline-block;
+      margin-left: 6px;
+      transition: transform 160ms ease;
+    }
+
+    .open-link:hover::after {
+      transform: translateX(3px);
+    }
+
+    .empty-state {
+      margin-top: 28px;
+      padding: 36px 22px;
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.68);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .story {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+
+      .story,
+      .story-number,
+      .open-link,
+      .open-link::after {
+        transition: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        padding: 34px 16px 54px;
+      }
+
+      .masthead {
+        grid-template-columns: 1fr;
+        align-items: start;
+        position: static;
+      }
+
+      h1 {
+        font-size: 2.32rem;
+      }
+
+      .stats {
+        width: 100%;
+      }
+
+      .story {
+        grid-template-columns: 44px 1fr;
+        gap: 12px;
+        padding: 18px 16px;
+        border-radius: 14px;
+      }
+
+      .story-number {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+
+      h2 {
+        font-size: 1.04rem;
+      }
+
+      .open-link {
+        width: 100%;
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <div>
+        <p class="brand">视野日报</p>
+        <h1>2026.07.04 信息简报</h1>
+        <p class="lead">从订阅源里挑出值得看的更新，整理成中文摘要，保留来源和原文入口，适合每天快速扫一遍。</p>
+      </div>
+      <aside class="stats" aria-label="日报统计">
+        <div class="stat">
+          <span>精选</span>
+          <strong>20 / 174</strong>
+        </div>
+        <div class="stat">
+          <span>更新</span>
+          <strong>07.04 23:55</strong>
+        </div>
+      </aside>
+    </header>
+    <section class="story-list" aria-label="精选内容">
+      
+      <article class="story" style="--i: 1">
+        <a class="story-number" href="https://nitter.net/gengdaJ/status/2073429671535054987#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 01 条原文">01</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / 逸尘</span>
+            <span class="category">产品增长</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 23:32</span>
+            <span class="meta-dot">·</span>
+            <span>评分 10.0</span>
+          </div>
+          <h2><a href="https://nitter.net/gengdaJ/status/2073429671535054987#m" target="_blank" rel="noopener noreferrer">Fable5体验与Codex记忆系统配置指南</a></h2>
+          <p class="summary">逸尘尝试将Fable5接入Claude并充值Zenmux，测试其Codex记忆系统的实际表现。文章还分享了适合小白一键配置的Codex记忆系统教程。</p>
+          <div class="footer-row">
+            <span class="tag">Codex</span>
+<span class="tag">Fable5</span>
+<span class="tag">Claude</span>
+<span class="tag">记忆系统</span>
+            <a class="open-link" href="https://nitter.net/gengdaJ/status/2073429671535054987#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 2">
+        <a class="story-number" href="https://nitter.net/adamwathan/status/2073405791093043391#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 02 条原文">02</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / Adam Wathan</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 21:57</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.9</span>
+          </div>
+          <h2><a href="https://nitter.net/adamwathan/status/2073405791093043391#m" target="_blank" rel="noopener noreferrer">Oak Club Monroe 深蹲平台体验视频</a></h2>
+          <p class="summary">Adam Wathan 分享了一段 YouTube 视频，展示了 Oak Club Monroe 作为 Voltra 深蹲腰带平台的早期使用体验。</p>
+          <div class="footer-row">
+            <span class="tag">Oak Club Monroe</span>
+<span class="tag">健身器材</span>
+<span class="tag">Youtube</span>
+            <a class="open-link" href="https://nitter.net/adamwathan/status/2073405791093043391#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 3">
+        <a class="story-number" href="https://nitter.net/adamwathan/status/2073405712261161188#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 03 条原文">03</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / Adam Wathan</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 21:56</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.9</span>
+          </div>
+          <h2><a href="https://nitter.net/adamwathan/status/2073405712261161188#m" target="_blank" rel="noopener noreferrer">Adam Wathan 开设家庭健身 YouTube 频道</a></h2>
+          <p class="summary">Adam Wathan 新建了一个 YouTube 频道，专门分享他对家庭健身器材的热爱，并已发布首个视频。</p>
+          <div class="footer-row">
+            <span class="tag">Youtube</span>
+<span class="tag">家庭健身</span>
+<span class="tag">Adam Wathan</span>
+            <a class="open-link" href="https://nitter.net/adamwathan/status/2073405712261161188#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 4">
+        <a class="story-number" href="https://nitter.net/gengdaJ/status/2073376011522322766#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 04 条原文">04</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / 逸尘</span>
+            <span class="category">产品增长</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 19:58</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.8</span>
+          </div>
+          <h2><a href="https://nitter.net/gengdaJ/status/2073376011522322766#m" target="_blank" rel="noopener noreferrer">TikHub 提供全平台社媒 API</a></h2>
+          <p class="summary">TikHub 聚合了 Twitter、小红书、TikTok 等海内外多平台社媒 API，且调用价格低廉。用户可借此实现多平台数据爬取、热点监控及账号监控等应用场景。</p>
+          <div class="footer-row">
+            <span class="tag">Tikhub</span>
+<span class="tag">Api</span>
+<span class="tag">数据爬取</span>
+<span class="tag">社媒监控</span>
+            <a class="open-link" href="https://nitter.net/gengdaJ/status/2073376011522322766#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 5">
+        <a class="story-number" href="https://nitter.net/wangray/status/2073370978705645803#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 05 条原文">05</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / Ray Wang</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 19:38</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.8</span>
+          </div>
+          <h2><a href="https://nitter.net/wangray/status/2073370978705645803#m" target="_blank" rel="noopener noreferrer">Claude Architect 认证备考：Agent 工具拆解</a></h2>
+          <p class="summary">Claude Architect 认证备考系列第七期发布，本期视频全面拆解了 Agent 工具。</p>
+          <div class="footer-row">
+            <span class="tag">Claude</span>
+<span class="tag">Agent</span>
+<span class="tag">认证备考</span>
+            <a class="open-link" href="https://nitter.net/wangray/status/2073370978705645803#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 6">
+        <a class="story-number" href="https://nitter.net/Dimillian/status/2073358200842203178#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 06 条原文">06</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / Thomas Ricouard</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 18:48</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.8</span>
+          </div>
+          <h2><a href="https://nitter.net/Dimillian/status/2073358200842203178#m" target="_blank" rel="noopener noreferrer">直接做饭就行</a></h2>
+          <p class="summary">Thomas Ricouard 在 X 上发文表示，你可以直接动手做饭。</p>
+          <div class="footer-row">
+            <span class="tag">生活</span>
+<span class="tag">烹饪</span>
+<span class="tag">X</span>
+            <a class="open-link" href="https://nitter.net/Dimillian/status/2073358200842203178#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 7">
+        <a class="story-number" href="https://nitter.net/GitTrend0x/status/2073314454054584470#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 07 条原文">07</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / GitTrend</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 15:54</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.7</span>
+          </div>
+          <h2><a href="https://nitter.net/GitTrend0x/status/2073314454054584470#m" target="_blank" rel="noopener noreferrer">阿里巴巴开源网页内 AI 代理 PageAgent</a></h2>
+          <p class="summary">阿里巴巴开源了 PageAgent，这是一个内嵌于网页的 AI 代理。只需引入一行代码，即可通过自然语言控制网页执行操作，无需浏览器扩展或后端支持，已可用于生产环境。</p>
+          <div class="footer-row">
+            <span class="tag">阿里巴巴</span>
+<span class="tag">Pageagent</span>
+<span class="tag">AI代理</span>
+<span class="tag">开源</span>
+            <a class="open-link" href="https://nitter.net/GitTrend0x/status/2073314454054584470#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 8">
+        <a class="story-number" href="https://nitter.net/gengdaJ/status/2073309514838020382#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 08 条原文">08</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / 逸尘</span>
+            <span class="category">产品增长</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 15:34</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.7</span>
+          </div>
+          <h2><a href="https://nitter.net/gengdaJ/status/2073309514838020382#m" target="_blank" rel="noopener noreferrer">Gemini 全局小窗口召唤技巧</a></h2>
+          <p class="summary">在 WhatsApp、微信等非浏览器应用中，按下 Control+G 即可召唤 Gemini 全局小窗口，方便随时进行翻译或文字回复。作者认为其用户体验出色，生成文字更具人情味。</p>
+          <div class="footer-row">
+            <span class="tag">Gemini</span>
+<span class="tag">使用技巧</span>
+<span class="tag">谷歌</span>
+            <a class="open-link" href="https://nitter.net/gengdaJ/status/2073309514838020382#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 9">
+        <a class="story-number" href="https://nitter.net/Dimillian/status/2073291180335399358#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 09 条原文">09</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / Thomas Ricouard</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 14:21</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.6</span>
+          </div>
+          <h2><a href="https://nitter.net/Dimillian/status/2073291180335399358#m" target="_blank" rel="noopener noreferrer">慢下来读本书</a></h2>
+          <p class="summary">Thomas Ricouard 表示自己已经很久没有慢下来好好读一本书了。</p>
+          <div class="footer-row">
+            <span class="tag">阅读</span>
+<span class="tag">生活</span>
+<span class="tag">感悟</span>
+            <a class="open-link" href="https://nitter.net/Dimillian/status/2073291180335399358#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 10">
+        <a class="story-number" href="https://nitter.net/Dimillian/status/2073290223425867781#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 10 条原文">10</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / Thomas Ricouard</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 14:18</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.6</span>
+          </div>
+          <h2><a href="https://nitter.net/Dimillian/status/2073290223425867781#m" target="_blank" rel="noopener noreferrer">线缆管理</a></h2>
+          <p class="summary">Thomas Ricouard 在 X 上分享了关于线缆管理的内容。</p>
+          <div class="footer-row">
+            <span class="tag">线缆管理</span>
+<span class="tag">桌面整理</span>
+            <a class="open-link" href="https://nitter.net/Dimillian/status/2073290223425867781#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 11">
+        <a class="story-number" href="https://nitter.net/jxnlco/status/2073274551140815327#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 11 条原文">11</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / jason</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 13:15</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.5</span>
+          </div>
+          <h2><a href="https://nitter.net/jxnlco/status/2073274551140815327#m" target="_blank" rel="noopener noreferrer">行动</a></h2>
+          <p class="summary">Jason 在 X 平台发布了一条简短的“action!”动态。</p>
+          <div class="footer-row">
+            <span class="tag">动态</span>
+<span class="tag">X</span>
+            <a class="open-link" href="https://nitter.net/jxnlco/status/2073274551140815327#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 12">
+        <a class="story-number" href="https://nitter.net/RhysSullivan/status/2073274237780218019#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 12 条原文">12</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / jason</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 13:14</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.4</span>
+          </div>
+          <h2><a href="https://nitter.net/RhysSullivan/status/2073274237780218019#m" target="_blank" rel="noopener noreferrer">开发者盛赞 Codex 计算机操作功能</a></h2>
+          <p class="summary">@jxnlco 转发称赞 Codex 的“computer use”功能堪称通用人工智能（AGI），是一项令人惊叹的发明。</p>
+          <div class="footer-row">
+            <span class="tag">Codex</span>
+<span class="tag">Agi</span>
+<span class="tag">人工智能</span>
+            <a class="open-link" href="https://nitter.net/RhysSullivan/status/2073274237780218019#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 13">
+        <a class="story-number" href="https://nitter.net/GitTrend0x/status/2073264870104117340#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 13 条原文">13</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / GitTrend</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 12:37</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.4</span>
+          </div>
+          <h2><a href="https://nitter.net/GitTrend0x/status/2073264870104117340#m" target="_blank" rel="noopener noreferrer">Polymarket BTC 动量交易策略开源项目</a></h2>
+          <p class="summary">开源项目 5min-btc-polymarket 将 Polymarket BTC 5分钟市场的动量交易策略封装为可运行的 OpenClaw Skill，内置严格风控与对冲机制，支持 Docker 一键部署。</p>
+          <div class="footer-row">
+            <span class="tag">Polymarket</span>
+<span class="tag">Btc</span>
+<span class="tag">量化交易</span>
+<span class="tag">GitHub</span>
+            <a class="open-link" href="https://nitter.net/GitTrend0x/status/2073264870104117340#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 14">
+        <a class="story-number" href="https://nitter.net/bluebird0605/status/2073264224017772738#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 14 条原文">14</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / 未完成 Dailyio</span>
+            <span class="category">产品增长</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 12:34</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.3</span>
+          </div>
+          <h2><a href="https://nitter.net/bluebird0605/status/2073264224017772738#m" target="_blank" rel="noopener noreferrer">美国拟对 AI 头部公司征收股权税</a></h2>
+          <p class="summary">美国参议员 Bernie Sanders 推动对 AI 头部公司征收 50% 股权税以建立约 7 万亿美元主权基金；随后 OpenAI 和 Anthropic 联合微软、亚马逊出资 5 亿美元成立工人培训组织 Raise Us。</p>
+          <div class="footer-row">
+            <span class="tag">AI监管</span>
+<span class="tag">财富再分配</span>
+<span class="tag">Bernie Sanders</span>
+<span class="tag">Openai</span>
+            <a class="open-link" href="https://nitter.net/bluebird0605/status/2073264224017772738#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 15">
+        <a class="story-number" href="https://nitter.net/Dimillian/status/2073260073753751613#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 15 条原文">15</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / Thomas Ricouard</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 12:18</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.3</span>
+          </div>
+          <h2><a href="https://nitter.net/Dimillian/status/2073260073753751613#m" target="_blank" rel="noopener noreferrer">同时看到 Luna 和 Sol</a></h2>
+          <p class="summary">Thomas Ricouard 在 X 平台发文称，他现在可以同时看到 Luna 和 Sol。</p>
+          <div class="footer-row">
+            <span class="tag">Luna</span>
+<span class="tag">Sol</span>
+<span class="tag">X平台</span>
+            <a class="open-link" href="https://nitter.net/Dimillian/status/2073260073753751613#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 16">
+        <a class="story-number" href="https://nitter.net/0xKingsKuan/status/2073233687655977427#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 16 条原文">16</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / GitTrend</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 10:33</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.2</span>
+          </div>
+          <h2><a href="https://nitter.net/0xKingsKuan/status/2073233687655977427#m" target="_blank" rel="noopener noreferrer">量化交易借助AI实现扭亏为盈</a></h2>
+          <p class="summary">作者历时2个半月进行88888轮优化，利用 AI 作为技术合伙人运行全币种多策略量化交易，成功将5月亏损近2000U反转为盈利270U+。其目标是实现被动收入，并计划继续将 AI agent 深度嵌入交易链路。</p>
+          <div class="footer-row">
+            <span class="tag">量化交易</span>
+<span class="tag">AI</span>
+<span class="tag">加密货币</span>
+<span class="tag">Ai Agent</span>
+            <a class="open-link" href="https://nitter.net/0xKingsKuan/status/2073233687655977427#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 17">
+        <a class="story-number" href="https://nitter.net/prd_008/status/2073229042938212589#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 17 条原文">17</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / Thomas Ricouard</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 10:14</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.2</span>
+          </div>
+          <h2><a href="https://nitter.net/prd_008/status/2073229042938212589#m" target="_blank" rel="noopener noreferrer">手机端浏览器的乐趣</a></h2>
+          <p class="summary">Thomas Ricouard 转发 @Dimillian 的推文，感叹在手机上使用浏览器的体验永远不会令人厌倦。</p>
+          <div class="footer-row">
+            <span class="tag">浏览器</span>
+<span class="tag">手机</span>
+<span class="tag">用户体验</span>
+            <a class="open-link" href="https://nitter.net/prd_008/status/2073229042938212589#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 18">
+        <a class="story-number" href="https://nitter.net/wangray/status/2073228820971479522#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 18 条原文">18</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / Ray Wang</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 10:14</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.2</span>
+          </div>
+          <h2><a href="https://nitter.net/wangray/status/2073228820971479522#m" target="_blank" rel="noopener noreferrer">X平台创作者收益显著提升</a></h2>
+          <p class="summary">创作者 Ray Wang 表示近期收益大幅提高，1.8M 曝光收益超 300 美元，而上个周期 4M+ 曝光仅获 400 多美元，并对此感谢马斯克。</p>
+          <div class="footer-row">
+            <span class="tag">X平台</span>
+<span class="tag">创作者收益</span>
+<span class="tag">马斯克</span>
+            <a class="open-link" href="https://nitter.net/wangray/status/2073228820971479522#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 19">
+        <a class="story-number" href="https://nitter.net/nash_su/status/2073227183351546320#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 19 条原文">19</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / nash_su</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 10:07</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.1</span>
+          </div>
+          <h2><a href="https://nitter.net/nash_su/status/2073227183351546320#m" target="_blank" rel="noopener noreferrer">攒够9月换iPhone资金</a></h2>
+          <p class="summary">一位网友表示，到9月份应该能攒够换新 iPhone 的钱。</p>
+          <div class="footer-row">
+            <span class="tag">Iphone</span>
+<span class="tag">数码</span>
+<span class="tag">消费</span>
+            <a class="open-link" href="https://nitter.net/nash_su/status/2073227183351546320#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="story" style="--i: 20">
+        <a class="story-number" href="https://nitter.net/GitTrend0x/status/2073227170600886625#m" target="_blank" rel="noopener noreferrer" aria-label="打开第 20 条原文">20</a>
+        <div class="story-main">
+          <div class="story-meta">
+            <span class="source">X / GitTrend</span>
+            <span class="category">AI 开发</span>
+            <span class="meta-dot">·</span>
+            <span>07.04 10:07</span>
+            <span class="meta-dot">·</span>
+            <span>评分 9.1</span>
+          </div>
+          <h2><a href="https://nitter.net/GitTrend0x/status/2073227170600886625#m" target="_blank" rel="noopener noreferrer">GitHub 热门榜被 AI Agent 与效率工具霸榜</a></h2>
+          <p class="summary">今日 GitHub 星标暴涨的项目包括大幅节省 token 的 caveman、多角色 AI Agent 套件 agency-agents 及开源 AI 渗透测试工具 strix，反映出 AI 提效工具的持续火热。</p>
+          <div class="footer-row">
+            <span class="tag">GitHub</span>
+<span class="tag">Ai Agent</span>
+<span class="tag">开源</span>
+<span class="tag">效率工具</span>
+            <a class="open-link" href="https://nitter.net/GitTrend0x/status/2073227170600886625#m" target="_blank" rel="noopener noreferrer">打开原文</a>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

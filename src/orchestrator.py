@@ -4,6 +4,7 @@ import asyncio
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import List, Dict, Optional
 from urllib.parse import urlparse
 import httpx
@@ -13,6 +14,7 @@ from .models import Config, ContentItem
 from .storage.manager import StorageManager
 from .services.email import EmailManager
 from .services.webhook import WebhookNotifier
+from .services.site import LocalSiteGenerator
 from .scrapers.github import GitHubScraper
 from .scrapers.hackernews import HackerNewsScraper
 from .scrapers.rss import RSSScraper
@@ -145,8 +147,11 @@ class HorizonOrchestrator:
             # 6. Search related stories + enrich with background knowledge (2nd AI pass)
             await self._enrich_important_items(important_items)
 
-            # 7. Generate and save daily summaries for each configured language
             today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+            self._update_local_site(important_items, today, len(all_items))
+
+            # 7. Generate and save daily summaries for each configured language
             for lang in self.config.ai.languages:
                 summarizer = DailySummarizer()
                 summary = await summarizer.generate_summary(important_items, today, len(all_items), language=lang)
@@ -349,6 +354,22 @@ class HorizonOrchestrator:
                 self.console.print(f"      • {sub}: {count}")
 
         return items
+
+    def _update_local_site(
+        self,
+        important_items: List[ContentItem],
+        date: str,
+        all_items_count: int,
+    ) -> None:
+        """Write the lightweight local daily site."""
+        try:
+            data_dir = Path(getattr(self.storage, "data_dir", "data"))
+            site_path = LocalSiteGenerator(data_dir / "site").write(
+                important_items, date=date, total_items=all_items_count
+            )
+            self.console.print(f"🌐 Updated local site: {site_path}\n")
+        except Exception as e:
+            self.console.print(f"[yellow]⚠️  Failed to update local site: {e}[/yellow]\n")
 
     @staticmethod
     def _sub_source_label(item: ContentItem) -> str:
