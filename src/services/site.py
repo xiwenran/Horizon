@@ -608,7 +608,7 @@ class LocalSiteGenerator:
         detail = _best_detail(item)
         if detail == title:
             detail = _best_detail(item, skip_title=True)
-        detail = _clip_by_cjk(detail, 50, fallback_limit=150)
+        detail = _clip_by_cjk(detail, 150, fallback_limit=360)
         source = _source_label(item)
         category = _category_label(item)
         published = _format_datetime(item.published_at, self.timezone)
@@ -746,7 +746,7 @@ def _personal_note_html(item: ContentItem) -> str:
     if not reason:
         return ""
 
-    body = _short_sentence(reason, 30, fallback_limit=90)
+    body = _short_sentence(reason, 50, fallback_limit=160)
 
     return f'<p class="personal-note"><strong>价值点：</strong>{escape(body)}</p>'
 

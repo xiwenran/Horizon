@@ -115,11 +115,11 @@ def test_local_site_generator_limits_value_and_summary_by_chinese_characters(tmp
         published_at=datetime(2026, 7, 4, 9, 0, tzinfo=timezone.utc),
     )
     item.personal_reason_zh = (
-        "MCP Server集成和Agent Workflow设计可直接参考用于Echo自动化流程"
+        "MCP Server集成和Agent Workflow设计可直接参考用于Echo框架和Horizon信息处理自动化"
     )
     item.metadata["detailed_summary_zh"] = (
-        "Cloudflare开源agentic-inbox项目，完整展示MCP Server、"
-        "AI Agent和邮件自动化工作流如何落地"
+        "Cloudflare开源agentic-inbox项目，完整展示MCP Server、AI Agent和邮件自动化工作流如何落地，"
+        "包括读取收件箱、检索历史邮件、草拟回复和自托管部署，适合作为Agent产品工程化参考。"
     )
 
     output = generator.write(
@@ -131,5 +131,5 @@ def test_local_site_generator_limits_value_and_summary_by_chinese_characters(tmp
 
     html = output.read_text(encoding="utf-8")
 
-    assert "MCP Server集成和Agent Workflow设计可直接参考用于Echo自动化流程" in html
-    assert "Cloudflare开源agentic-inbox项目，完整展示MCP Server、AI Agent和邮件自动化工作流如何落地" in html
+    assert "MCP Server集成和Agent Workflow设计可直接参考用于Echo框架和Horizon信息处理自动化" in html
+    assert "自托管部署，适合作为Agent产品工程化参考。" in html
