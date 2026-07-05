@@ -194,11 +194,13 @@ class TwitterConfig(BaseModel):
     Two modes are supported:
     - "apify": Use Apify scweet actor (requires APIFY_TOKEN, more reliable)
     - "playwright": Use Playwright + browser cookies (free, no token needed)
+    - "tikhub": Use TikHub API (requires TIKHUB_API_KEY, no X login needed)
     """
 
     enabled: bool = True
-    mode: str = "apify"  # "apify" or "playwright"
+    mode: str = "apify"  # "apify", "playwright", or "tikhub"
     users: List[str] = Field(default_factory=list)
+    user_categories: Dict[str, str] = Field(default_factory=dict)
     fetch_limit: int = 10
     fetch_reply_text: bool = False
     max_replies_per_tweet: int = 3
@@ -210,6 +212,11 @@ class TwitterConfig(BaseModel):
     # Playwright settings (used when mode == "playwright")
     cookie_dir: str = "data"
     cookie_file_pattern: str = "x_cookies_*.json"
+    # TikHub settings (used when mode == "tikhub")
+    tikhub_api_key_env: str = "TIKHUB_API_KEY"
+    tikhub_api_key_file: str = "TIKHUB_API_KEY.env"
+    tikhub_base_url: str = "https://api.tikhub.io"
+    tikhub_request_interval_sec: float = 1.0
 
 
 class OpenBBWatchlist(BaseModel):

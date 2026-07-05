@@ -20,6 +20,7 @@ from .scrapers.hackernews import HackerNewsScraper
 from .scrapers.rss import RSSScraper
 from .scrapers.reddit import RedditScraper
 from .scrapers.telegram import TelegramScraper
+from .scrapers.tikhub import TikHubTwitterScraper
 from .scrapers.twitter import TwitterScraper
 from .scrapers.twitter_playwright import TwitterPlaywrightScraper
 from .scrapers.openbb import OpenBBScraper
@@ -291,7 +292,9 @@ class HorizonOrchestrator:
             # Twitter (Apify or Playwright mode)
             if self.config.sources.twitter and self.config.sources.twitter.enabled:
                 tw_cfg = self.config.sources.twitter
-                if tw_cfg.mode == "playwright":
+                if tw_cfg.mode == "tikhub":
+                    twitter_scraper = TikHubTwitterScraper(tw_cfg, client)
+                elif tw_cfg.mode == "playwright":
                     twitter_scraper = TwitterPlaywrightScraper(tw_cfg)
                 else:
                     twitter_scraper = TwitterScraper(tw_cfg, client)
@@ -659,6 +662,11 @@ class HorizonOrchestrator:
         )
 
         async with httpx.AsyncClient(timeout=30.0) as client:
+            if tw_cfg.mode == "tikhub":
+                self.console.print(
+                    "   [yellow]Reply expansion not yet supported in TikHub mode.[/yellow]"
+                )
+                return
             if tw_cfg.mode == "playwright":
                 self.console.print(
                     "   [yellow]Reply expansion not yet supported in Playwright mode.[/yellow]"
