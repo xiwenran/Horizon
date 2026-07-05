@@ -33,6 +33,10 @@ from .ai.analyzer import ContentAnalyzer
 from .ai.summarizer import DailySummarizer
 from .ai.enricher import ContentEnricher
 from .ai.tokens import get_usage_snapshot
+from .mcp.run_store import RunStore
+
+
+RUN_ARTIFACT_RETENTION_DAYS = 30
 
 
 @dataclass
@@ -88,12 +92,36 @@ class HorizonOrchestrator:
             # 1. Determine time window
             since = self._determine_time_window(force_hours)
             self.console.print(f"📅 Fetching content since: {since.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            artifact_store = self._run_artifact_store()
+            deleted_runs = artifact_store.cleanup_old_runs(RUN_ARTIFACT_RETENTION_DAYS)
+            if deleted_runs:
+                self.console.print(
+                    f"🧹 Removed {deleted_runs} run artifact(s) older than "
+                    f"{RUN_ARTIFACT_RETENTION_DAYS} days\n"
+                )
+            artifact_run_id = artifact_store.create_run()
+            artifact_store.update_meta(
+                artifact_run_id,
+                {
+                    "hours": force_hours or self.config.filtering.time_window_hours,
+                    "since": since.isoformat(),
+                    "retention_days": RUN_ARTIFACT_RETENTION_DAYS,
+                },
+            )
 
             # 2. Fetch content from all sources
             all_items = await self.fetch_all_sources(since)
             self.console.print(f"📥 Fetched {len(all_items)} items from all sources\n")
 
             if not all_items:
+                self._save_run_stage(
+                    artifact_store,
+                    artifact_run_id,
+                    "raw",
+                    [],
+                    raw_count_before_merge=0,
+                    raw_count=0,
+                )
                 self.console.print("[yellow]No new content found. Exiting.[/yellow]")
                 return
 
@@ -104,10 +132,25 @@ class HorizonOrchestrator:
                     f"🔗 Merged {len(all_items) - len(merged_items)} cross-source duplicates "
                     f"→ {len(merged_items)} unique items\n"
                 )
+            self._save_run_stage(
+                artifact_store,
+                artifact_run_id,
+                "raw",
+                merged_items,
+                raw_count_before_merge=len(all_items),
+                raw_count=len(merged_items),
+            )
 
             # 4. Analyze with AI
             analyzed_items = await self._analyze_content(merged_items)
             self.console.print(f"🤖 Analyzed {len(analyzed_items)} items with AI\n")
+            self._save_run_stage(
+                artifact_store,
+                artifact_run_id,
+                "scored",
+                analyzed_items,
+                scored_count=len(analyzed_items),
+            )
 
             # 5. Filter by score threshold
             threshold = self.config.filtering.ai_score_threshold
@@ -143,6 +186,13 @@ class HorizonOrchestrator:
             # 5.7 Apply per-category and global digest limits before enrichment
             balanced_result = self.apply_balanced_digest(important_items)
             important_items = balanced_result.items
+            self._save_run_stage(
+                artifact_store,
+                artifact_run_id,
+                "filtered",
+                important_items,
+                filtered_count=len(important_items),
+            )
 
             # Show per-sub-source selection breakdown
             selected_counts: Dict[str, int] = defaultdict(int)
@@ -155,6 +205,13 @@ class HorizonOrchestrator:
 
             # 6. Search related stories + enrich with background knowledge (2nd AI pass)
             await self._enrich_important_items(important_items)
+            self._save_run_stage(
+                artifact_store,
+                artifact_run_id,
+                "enriched",
+                important_items,
+                enriched_count=len(important_items),
+            )
 
             today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -169,6 +226,13 @@ class HorizonOrchestrator:
                 # Save to data/summaries/
                 summary_path = self.storage.save_daily_summary(today, summary, language=lang)
                 self.console.print(f"💾 Saved {lang.upper()} summary to: {summary_path}\n")
+                summary_artifact = artifact_store.save_summary(artifact_run_id, lang, summary)
+                artifact_store.update_meta(
+                    artifact_run_id,
+                    {
+                        f"summary_{lang}_artifact": str(summary_artifact.resolve()),
+                    },
+                )
 
                 # Copy to docs/ for GitHub Pages
                 try:
@@ -250,6 +314,23 @@ class HorizonOrchestrator:
                 )
 
             raise
+
+    def _run_artifact_store(self) -> RunStore:
+        data_dir = Path(getattr(self.storage, "data_dir", "data"))
+        return RunStore(data_dir / "mcp-runs")
+
+    def _save_run_stage(
+        self,
+        store: RunStore,
+        run_id: str,
+        stage: str,
+        items: List[ContentItem],
+        **meta: int,
+    ) -> None:
+        store.save_items(run_id, stage, [item.model_dump(mode="json") for item in items])
+        updates = dict(meta)
+        updates[f"{stage}_artifact"] = str((store.run_dir(run_id) / f"{stage}_items.json").resolve())
+        store.update_meta(run_id, updates)
 
     def _determine_time_window(self, force_hours: int = None) -> datetime:
         if force_hours:

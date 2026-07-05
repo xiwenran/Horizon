@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -106,6 +107,44 @@ class RunStore:
 
         entries.sort(key=lambda x: x["updated_at"] or x["created_at"], reverse=True)
         return entries[: max(0, limit)]
+
+    def cleanup_old_runs(
+        self,
+        retention_days: int = 30,
+        *,
+        now: datetime | None = None,
+    ) -> int:
+        """Delete run directories older than the retention window."""
+        if retention_days <= 0:
+            raise ValueError("retention_days must be greater than 0")
+
+        now = now or datetime.now(timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        cutoff = now - timedelta(days=retention_days)
+
+        deleted = 0
+        for run_dir in self.root.iterdir():
+            if not run_dir.is_dir():
+                continue
+            meta_path = run_dir / "meta.json"
+            if not meta_path.exists():
+                continue
+            try:
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                timestamp = meta.get("created_at") or meta.get("updated_at")
+                if not isinstance(timestamp, str):
+                    continue
+                created_at = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            except (OSError, ValueError, json.JSONDecodeError):
+                continue
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            if created_at < cutoff:
+                shutil.rmtree(run_dir)
+                deleted += 1
+
+        return deleted
 
     def write_json(self, run_id: str, filename: str, payload: Any) -> Path:
         path = self.run_dir(run_id) / filename

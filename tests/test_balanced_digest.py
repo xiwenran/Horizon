@@ -212,3 +212,66 @@ def test_run_applies_balanced_digest_before_enrichment(tmp_path, monkeypatch) ->
     asyncio.run(orchestrator.run())
 
     assert enriched_ids == ["ai"]
+
+
+def test_run_persists_pipeline_stage_artifacts(tmp_path, monkeypatch) -> None:
+    config = Config(
+        ai=AIConfig(
+            provider="openai",
+            model="test",
+            api_key_env="TEST_API_KEY",
+            languages=["zh"],
+        ),
+        sources=SourcesConfig(),
+        filtering=FilteringConfig(ai_score_threshold=7.0),
+    )
+    summaries: dict[str, str] = {}
+
+    def save_daily_summary(date, markdown, language="en"):  # type: ignore[no-untyped-def]
+        summaries[language] = markdown
+        path = tmp_path / "data" / "summaries" / f"horizon-{date}-{language}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(markdown, encoding="utf-8")
+        return path
+
+    storage = SimpleNamespace(data_dir=tmp_path / "data", save_daily_summary=save_daily_summary)
+    orchestrator = HorizonOrchestrator(config, storage)
+    items = [make_item("keep", 8.0, "ai"), make_item("drop", 6.0, "ai")]
+
+    async def fetch_all_sources(since):  # type: ignore[no-untyped-def]
+        return items
+
+    async def analyze_content(input_items):  # type: ignore[no-untyped-def]
+        return input_items
+
+    async def merge_topic_duplicates(input_items):  # type: ignore[no-untyped-def]
+        return input_items
+
+    async def expand_twitter_discussion(input_items):  # type: ignore[no-untyped-def]
+        return None
+
+    async def enrich_important_items(input_items):  # type: ignore[no-untyped-def]
+        return None
+
+    class FakeSummarizer:
+        async def generate_summary(self, input_items, date, total_fetched, language="en"):  # type: ignore[no-untyped-def]
+            return f"# summary {language}"
+
+    monkeypatch.setattr(orchestrator, "fetch_all_sources", fetch_all_sources)
+    monkeypatch.setattr(orchestrator, "_analyze_content", analyze_content)
+    monkeypatch.setattr(orchestrator, "merge_topic_duplicates", merge_topic_duplicates)
+    monkeypatch.setattr(orchestrator, "_expand_twitter_discussion", expand_twitter_discussion)
+    monkeypatch.setattr(orchestrator, "_enrich_important_items", enrich_important_items)
+    monkeypatch.setattr("src.orchestrator.DailySummarizer", FakeSummarizer)
+    monkeypatch.chdir(tmp_path)
+
+    asyncio.run(orchestrator.run())
+
+    run_dirs = list((tmp_path / "data" / "mcp-runs").iterdir())
+    assert len(run_dirs) == 1
+    assert (run_dirs[0] / "raw_items.json").exists()
+    assert (run_dirs[0] / "scored_items.json").exists()
+    assert (run_dirs[0] / "filtered_items.json").exists()
+    assert (run_dirs[0] / "enriched_items.json").exists()
+    assert (run_dirs[0] / "summary-zh.md").read_text(encoding="utf-8") == "# summary zh"
+    assert summaries["zh"] == "# summary zh"

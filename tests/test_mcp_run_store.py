@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -103,3 +104,20 @@ def test_list_runs_returns_desc_order(tmp_path: Path) -> None:
 
     assert runs[0]["run_id"] == "run-2"
     assert runs[1]["run_id"] == "run-1"
+
+
+def test_cleanup_old_runs_deletes_runs_older_than_retention(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    old_run = store.create_run("run-old")
+    recent_run = store.create_run("run-recent")
+    store.update_meta(old_run, {"created_at": "2026-05-01T00:00:00+00:00"})
+    store.update_meta(recent_run, {"created_at": "2026-07-01T00:00:00+00:00"})
+
+    deleted = store.cleanup_old_runs(
+        retention_days=30,
+        now=datetime(2026, 7, 5, tzinfo=timezone.utc),
+    )
+
+    assert deleted == 1
+    assert not (tmp_path / "run-old").exists()
+    assert (tmp_path / "run-recent").exists()
