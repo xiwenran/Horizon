@@ -81,20 +81,21 @@ class LocalSiteGenerator:
   <title>视野日报 - {escape(display_date)}</title>
   <style>
     :root {{
-      --paper: #fbfaf5;
-      --wash: #eef6f1;
-      --ink: #24252a;
-      --muted: #69707c;
-      --faint: #9299a5;
-      --line: #e4ddd1;
-      --card: #ffffff;
-      --teal: #14776f;
-      --blue: #315f9f;
-      --coral: #c85b48;
-      --amber: #af7620;
-      --violet: #755aa9;
-      --mint: #dff3ec;
-      --shadow: 0 24px 70px rgba(63, 58, 49, 0.12);
+      --paper: #f5f7fb;
+      --ink: #111827;
+      --muted: #667085;
+      --faint: #98a2b3;
+      --line: rgba(21, 32, 50, 0.1);
+      --glass: rgba(255, 255, 255, 0.72);
+      --glass-strong: rgba(255, 255, 255, 0.88);
+      --blue: #0071e3;
+      --sky: #5ac8fa;
+      --mint: #34c759;
+      --pink: #ff7eb6;
+      --amber: #ffb340;
+      --violet: #8e8cf0;
+      --shadow: 0 22px 58px rgba(28, 39, 64, 0.12);
+      --shadow-hover: 0 34px 86px rgba(28, 39, 64, 0.18);
     }}
 
     * {{
@@ -104,13 +105,15 @@ class LocalSiteGenerator:
     body {{
       margin: 0;
       background:
-        linear-gradient(160deg, rgba(238, 246, 241, 0.96) 0, rgba(251, 250, 245, 0.92) 38%, rgba(250, 246, 239, 0.96) 100%),
-        linear-gradient(90deg, rgba(200, 91, 72, 0.055), transparent 34%, rgba(49, 95, 159, 0.06)),
+        linear-gradient(115deg, rgba(90, 200, 250, 0.22), transparent 34%),
+        linear-gradient(245deg, rgba(255, 126, 182, 0.16), transparent 38%),
+        linear-gradient(180deg, #fafdff 0, #f5f8ff 43%, #f7f7fb 100%),
         var(--paper);
       color: var(--ink);
-      font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
       font-size: 16px;
       letter-spacing: 0;
+      min-height: 100vh;
     }}
 
     body::before {{
@@ -118,12 +121,11 @@ class LocalSiteGenerator:
       position: fixed;
       inset: 0;
       pointer-events: none;
-      opacity: 0.38;
+      opacity: 0.52;
       background-image:
-        linear-gradient(rgba(32, 36, 42, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(32, 36, 42, 0.026) 1px, transparent 1px);
-      background-size: 30px 30px;
-      mask-image: linear-gradient(180deg, #000 0, transparent 68%);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 34%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 7px);
+      mask-image: linear-gradient(180deg, #000 0, transparent 74%);
     }}
 
     a {{
@@ -133,9 +135,9 @@ class LocalSiteGenerator:
 
     .page {{
       position: relative;
-      width: min(100%, 1080px);
+      width: min(100%, 1120px);
       margin: 0 auto;
-      padding: 46px 22px 76px;
+      padding: 36px 24px 80px;
     }}
 
     .masthead {{
@@ -144,21 +146,22 @@ class LocalSiteGenerator:
       z-index: 5;
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 24px;
+      gap: 28px;
       align-items: end;
-      padding: 24px 0 26px;
-      border-bottom: 1px solid rgba(107, 94, 72, 0.18);
-      background: linear-gradient(180deg, rgba(251, 250, 245, 0.94), rgba(251, 250, 245, 0.74));
-      backdrop-filter: blur(16px);
+      padding: 28px 0 30px;
+      border-bottom: 1px solid rgba(21, 32, 50, 0.08);
+      background: linear-gradient(180deg, rgba(250, 252, 255, 0.9), rgba(250, 252, 255, 0.64));
+      backdrop-filter: blur(24px) saturate(1.45);
+      -webkit-backdrop-filter: blur(24px) saturate(1.45);
     }}
 
     .brand {{
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      margin: 0 0 16px;
-      color: var(--teal);
-      font-size: 0.84rem;
+      gap: 9px;
+      margin: 0 0 18px;
+      color: #344054;
+      font-size: 0.78rem;
       font-weight: 800;
       letter-spacing: 0.08em;
     }}
@@ -168,42 +171,47 @@ class LocalSiteGenerator:
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--teal), var(--coral));
-      box-shadow: 0 0 0 6px rgba(20, 119, 111, 0.1);
+      background: linear-gradient(135deg, var(--blue), var(--sky) 44%, var(--pink));
+      box-shadow: 0 0 0 6px rgba(0, 113, 227, 0.1);
     }}
 
     h1 {{
       max-width: 760px;
       margin: 0;
-      font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
-      font-size: 3.42rem;
-      line-height: 1.02;
-      font-weight: 700;
+      font-size: 3.56rem;
+      line-height: 1.04;
+      font-weight: 800;
       letter-spacing: 0;
+      background: linear-gradient(95deg, #101828 0, #1d4ed8 43%, #9b3f7f 86%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }}
 
     .lead {{
-      max-width: 660px;
-      margin: 18px 0 0;
+      max-width: 680px;
+      margin: 16px 0 0;
       color: var(--muted);
-      font-size: 1.02rem;
-      line-height: 1.75;
+      font-size: 1.06rem;
+      line-height: 1.72;
     }}
 
     .stats {{
       min-width: 236px;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      border: 1px solid var(--line);
-      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      border-radius: 8px;
       overflow: hidden;
-      background: rgba(255, 255, 255, 0.76);
-      box-shadow: 0 18px 42px rgba(63, 58, 49, 0.08);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(246, 249, 255, 0.62));
+      box-shadow: 0 18px 44px rgba(28, 39, 64, 0.1);
+      backdrop-filter: blur(20px) saturate(1.3);
+      -webkit-backdrop-filter: blur(20px) saturate(1.3);
     }}
 
     .stat {{
       padding: 14px 16px;
-      border-right: 1px solid var(--line);
+      border-right: 1px solid rgba(21, 32, 50, 0.08);
     }}
 
     .stat:nth-child(2n) {{
@@ -227,65 +235,105 @@ class LocalSiteGenerator:
 
     .story-list {{
       display: grid;
-      gap: 16px;
-      margin-top: 28px;
+      gap: 14px;
+      margin-top: 30px;
     }}
 
     .story {{
-      --accent: var(--teal);
+      --accent: var(--blue);
+      --accent-soft: rgba(0, 113, 227, 0.13);
       position: relative;
       display: grid;
       grid-template-columns: 64px 1fr;
       gap: 18px;
       min-height: 148px;
       padding: 22px;
-      border: 1px solid rgba(107, 94, 72, 0.18);
-      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      border-radius: 8px;
       background:
-        linear-gradient(90deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 24%),
-        rgba(255, 255, 255, 0.9);
+        linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.7)),
+        linear-gradient(110deg, var(--accent-soft), transparent 34%);
       box-shadow: var(--shadow);
       overflow: hidden;
       opacity: 0;
-      transform: translateY(14px) scale(0.985);
-      animation: cardIn 620ms cubic-bezier(0.2, 0.9, 0.24, 1) forwards;
+      transform: translateY(18px) scale(0.988);
+      animation: cardIn 700ms cubic-bezier(0.2, 0.92, 0.2, 1) forwards;
       animation-delay: calc(var(--i) * 52ms);
-      transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+      backdrop-filter: blur(20px) saturate(1.35);
+      -webkit-backdrop-filter: blur(20px) saturate(1.35);
+      transition:
+        transform 240ms cubic-bezier(0.2, 0.92, 0.2, 1),
+        border-color 240ms ease,
+        box-shadow 240ms ease,
+        background 240ms ease;
+      will-change: transform;
     }}
 
     .story:nth-child(4n + 1) {{
-      --accent: var(--teal);
+      --accent: var(--blue);
+      --accent-soft: rgba(0, 113, 227, 0.13);
     }}
 
     .story:nth-child(4n + 2) {{
-      --accent: var(--blue);
+      --accent: var(--pink);
+      --accent-soft: rgba(255, 126, 182, 0.14);
     }}
 
     .story:nth-child(4n + 3) {{
-      --accent: var(--coral);
+      --accent: var(--mint);
+      --accent-soft: rgba(52, 199, 89, 0.13);
     }}
 
     .story:nth-child(4n) {{
-      --accent: var(--amber);
+      --accent: var(--violet);
+      --accent-soft: rgba(142, 140, 240, 0.14);
     }}
 
     .story::before {{
       content: "";
       position: absolute;
-      inset: 0 auto 0 0;
-      width: 5px;
-      background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 36%, transparent));
-      opacity: 0.9;
+      inset: 0;
+      padding: 1px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), var(--accent), rgba(255, 255, 255, 0.72));
+      opacity: 0.58;
+      pointer-events: none;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+    }}
+
+    .story::after {{
+      content: "";
+      position: absolute;
+      top: -32%;
+      bottom: -32%;
+      left: -42%;
+      width: 34%;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+      opacity: 0;
+      transform: rotate(12deg);
+      transition: left 520ms cubic-bezier(0.2, 0.92, 0.2, 1), opacity 220ms ease;
     }}
 
     .story:hover {{
-      transform: translateY(-4px);
-      border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
-      box-shadow: 0 28px 80px rgba(63, 58, 49, 0.16);
+      transform: translateY(-7px) scale(1.006);
+      border-color: color-mix(in srgb, var(--accent) 34%, #ffffff);
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(249, 252, 255, 0.82)),
+        linear-gradient(110deg, var(--accent-soft), transparent 38%);
+      box-shadow: var(--shadow-hover);
+    }}
+
+    .story:hover::after {{
+      left: 112%;
+      opacity: 1;
     }}
 
     .story:focus-within {{
-      outline: 3px solid rgba(52, 104, 183, 0.24);
+      outline: 3px solid rgba(0, 113, 227, 0.22);
       outline-offset: 3px;
     }}
 
@@ -294,19 +342,23 @@ class LocalSiteGenerator:
       place-items: center;
       width: 54px;
       height: 54px;
-      border: 1px solid color-mix(in srgb, var(--accent) 26%, #ffffff);
+      border: 1px solid color-mix(in srgb, var(--accent) 24%, #ffffff);
       border-radius: 50%;
       color: var(--accent);
-      background: color-mix(in srgb, var(--accent) 10%, #ffffff);
-      font-family: "Iowan Old Style", Georgia, serif;
-      font-size: 1.34rem;
-      font-weight: 700;
-      transition: transform 180ms ease, background 180ms ease;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.62)),
+        color-mix(in srgb, var(--accent) 9%, #ffffff);
+      font-size: 1.2rem;
+      font-weight: 800;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 12px 28px rgba(28, 39, 64, 0.08);
+      transition: transform 220ms ease, background 220ms ease, box-shadow 220ms ease;
     }}
 
     .story:hover .story-number {{
-      transform: rotate(-4deg) scale(1.04);
-      background: color-mix(in srgb, var(--accent) 14%, #ffffff);
+      transform: translateY(-2px) scale(1.06);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent) 18%, #ffffff), #ffffff);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 18px 34px rgba(28, 39, 64, 0.13);
     }}
 
     .story-main {{
@@ -335,9 +387,9 @@ class LocalSiteGenerator:
 
     .category {{
       padding: 3px 9px;
-      border: 1px solid color-mix(in srgb, var(--accent) 26%, #ffffff);
+      border: 1px solid color-mix(in srgb, var(--accent) 24%, #ffffff);
       border-radius: 999px;
-      background: color-mix(in srgb, var(--accent) 10%, #ffffff);
+      background: color-mix(in srgb, var(--accent) 11%, #ffffff);
       color: var(--accent);
       font-size: 0.76rem;
       font-weight: 700;
@@ -348,11 +400,16 @@ class LocalSiteGenerator:
       font-size: 1.2rem;
       line-height: 1.48;
       letter-spacing: 0;
+      transition: color 180ms ease;
+    }}
+
+    .story:hover h2 {{
+      color: color-mix(in srgb, var(--accent) 72%, #111827);
     }}
 
     .summary {{
       margin: 10px 0 0;
-      color: #4f5561;
+      color: #4b5565;
       line-height: 1.82;
     }}
 
@@ -369,39 +426,44 @@ class LocalSiteGenerator:
       border-radius: 999px;
       font-size: 0.76rem;
       font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
     }}
 
     .tag:nth-child(5n + 1) {{
-      background: #eaf6f3;
-      color: var(--teal);
+      background: #e8f3ff;
+      color: #0068d8;
     }}
 
     .tag:nth-child(5n + 2) {{
-      background: #fff3e1;
+      background: #fff3dd;
       color: var(--amber);
     }}
 
     .tag:nth-child(5n + 3) {{
-      background: #f5efff;
+      background: #f0efff;
       color: var(--violet);
     }}
 
     .tag:nth-child(5n + 4) {{
-      background: #fdeeea;
-      color: var(--coral);
+      background: #ffeaf3;
+      color: #d94886;
     }}
 
     .tag:nth-child(5n) {{
-      background: #eef4ff;
-      color: var(--blue);
+      background: #e9f8ef;
+      color: #178a3f;
     }}
 
     .open-link {{
       margin-left: auto;
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 10%, #ffffff);
       color: var(--accent);
       font-size: 0.84rem;
       font-weight: 800;
-      transition: transform 160ms ease;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
     }}
 
     .open-link::after {{
@@ -415,14 +477,22 @@ class LocalSiteGenerator:
       transform: translateX(3px);
     }}
 
+    .story:hover .open-link {{
+      transform: translateY(-1px);
+      background: var(--accent);
+      color: #ffffff;
+    }}
+
     .empty-state {{
       margin-top: 28px;
       padding: 36px 22px;
       border: 1px dashed var(--line);
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.68);
+      border-radius: 8px;
+      background: var(--glass);
       color: var(--muted);
       text-align: center;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }}
 
     @keyframes cardIn {{
@@ -444,6 +514,7 @@ class LocalSiteGenerator:
       }}
 
       .story,
+      .story::after,
       .story-number,
       .open-link,
       .open-link::after {{
@@ -453,7 +524,7 @@ class LocalSiteGenerator:
 
     @media (max-width: 760px) {{
       .page {{
-        padding: 34px 16px 54px;
+        padding: 30px 16px 56px;
       }}
 
       .masthead {{
@@ -463,7 +534,7 @@ class LocalSiteGenerator:
       }}
 
       h1 {{
-        font-size: 2.32rem;
+        font-size: 2.38rem;
       }}
 
       .stats {{
@@ -473,8 +544,7 @@ class LocalSiteGenerator:
       .story {{
         grid-template-columns: 44px 1fr;
         gap: 12px;
-        padding: 18px 16px;
-        border-radius: 14px;
+        padding: 18px 15px;
       }}
 
       .story-number {{
@@ -490,6 +560,7 @@ class LocalSiteGenerator:
       .open-link {{
         width: 100%;
         margin-left: 0;
+        text-align: center;
       }}
     }}
   </style>
@@ -735,6 +806,8 @@ def _localized_label(value: str) -> str:
         "x-ai-dev": "AI 开发",
         "x-product-growth": "产品增长",
         "x-crawler": "抓取工具",
+        "x-design": "设计",
+        "x-media": "媒体",
         "crawler": "抓取",
         "scraper": "抓取",
         "scraping": "抓取",

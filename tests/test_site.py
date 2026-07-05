@@ -10,6 +10,7 @@ def make_item(
     title: str,
     score: float,
     published_at: datetime,
+    category: str = "x-rss",
 ) -> ContentItem:
     return ContentItem(
         id=item_id,
@@ -21,7 +22,7 @@ def make_item(
         published_at=published_at,
         metadata={
             "feed_name": "GitTrend0x",
-            "category": "x-rss",
+            "category": category,
             "tags": ["crawler"],
             "title_zh": f"{title} 中文标题",
             "detailed_summary_zh": f"{title} 的中文摘要",
@@ -42,6 +43,7 @@ def test_local_site_generator_writes_index(tmp_path) -> None:
                 title="Lower score",
                 score=7.4,
                 published_at=datetime(2026, 7, 4, 8, 0, tzinfo=timezone.utc),
+                category="x-design",
             ),
             make_item(
                 "higher",
@@ -65,7 +67,12 @@ def test_local_site_generator_writes_index(tmp_path) -> None:
     assert "GitTrend0x" in html
     assert "https://example.com/higher" in html
     assert "X 订阅" in html
+    assert "设计" in html
+    assert "X Design" not in html
     assert "评分 9.2" in html
+    assert "backdrop-filter: blur(24px)" in html
+    assert "translateY(-7px)" in html
+    assert "cardIn 700ms" in html
 
 
 def test_local_site_generator_escapes_html(tmp_path) -> None:
