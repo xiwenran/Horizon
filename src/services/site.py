@@ -46,6 +46,7 @@ class LocalSiteGenerator:
             total_items=total_items,
             generated_at=generated_at,
         )
+        html = _strip_trailing_whitespace(html)
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
         output_path = self.output_dir / "index.html"
@@ -776,6 +777,10 @@ def _clean_text(value: str) -> str:
     without_tags = _TAG_RE.sub(" ", value)
     decoded = unescape(without_tags)
     return _SPACE_RE.sub(" ", decoded).strip()
+
+
+def _strip_trailing_whitespace(value: str) -> str:
+    return "\n".join(line.rstrip() for line in value.splitlines()) + "\n"
 
 
 def _clip(value: str, limit: int) -> str:

@@ -133,3 +133,25 @@ def test_local_site_generator_limits_value_and_summary_by_chinese_characters(tmp
 
     assert "MCP Server集成和Agent Workflow设计可直接参考用于Echo框架和Horizon信息处理自动化" in html
     assert "自托管部署，适合作为Agent产品工程化参考。" in html
+
+
+def test_local_site_generator_strips_trailing_whitespace(tmp_path) -> None:
+    generator = LocalSiteGenerator(tmp_path)
+    output = generator.write(
+        [
+            make_item(
+                "no-category",
+                title="No category",
+                score=8.8,
+                published_at=datetime(2026, 7, 4, 9, 0, tzinfo=timezone.utc),
+                category="",
+            )
+        ],
+        date="2026-07-04",
+        total_items=1,
+        generated_at=datetime(2026, 7, 4, 10, 30, tzinfo=timezone.utc),
+    )
+
+    lines = output.read_text(encoding="utf-8").splitlines()
+
+    assert all(line == line.rstrip() for line in lines)
