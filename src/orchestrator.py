@@ -1,6 +1,9 @@
 """Main orchestrator coordinating the entire workflow."""
 
 import asyncio
+import logging
+import os
+import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -35,8 +38,14 @@ from .ai.enricher import ContentEnricher
 from .ai.tokens import get_usage_snapshot
 from .mcp.run_store import RunStore
 
+logger = logging.getLogger(__name__)
+
 
 RUN_ARTIFACT_RETENTION_DAYS = 30
+GITHUB_README_MAX_CHARS = 4000
+GITHUB_README_CONCURRENCY = 5
+GITHUB_README_TIMEOUT = 15.0
+_GITHUB_REPO_URL_RE = re.compile(r"^/([^/]+)/([^/]+?)(?:\.git)?/?$")
 
 
 @dataclass
@@ -140,6 +149,10 @@ class HorizonOrchestrator:
                 raw_count_before_merge=len(all_items),
                 raw_count=len(merged_items),
             )
+
+            # 3.5 Fetch GitHub READMEs for repo items so the AI has more than a
+            # one-line description to work with (best-effort, never blocks the run)
+            await self._enrich_github_readmes(merged_items)
 
             # 4. Analyze with AI
             analyzed_items = await self._analyze_content(merged_items)
@@ -841,6 +854,67 @@ class HorizonOrchestrator:
         enricher = ContentEnricher(ai_client)
         await enricher.enrich_batch(items)
         self.console.print(f"   Enriched {len(items)} items\n")
+
+    async def _enrich_github_readmes(self, items: List[ContentItem]) -> None:
+        """Append README content to items whose URL points at a github.com repo.
+
+        Runs before AI analysis so the analyzer has more than a one-line
+        description to work with (OSS Insight trending items in particular).
+        Best-effort: any fetch failure (404, rate limit, timeout) is logged
+        and skipped, the item's original content is left untouched, and a
+        single failure never interrupts the rest of the run.
+        """
+        targets: List[tuple[ContentItem, str, str]] = []
+        for item in items:
+            parsed = urlparse(str(item.url))
+            if parsed.hostname not in ("github.com", "www.github.com"):
+                continue
+            match = _GITHUB_REPO_URL_RE.match(parsed.path)
+            if not match:
+                continue
+            targets.append((item, match.group(1), match.group(2)))
+
+        if not targets:
+            return
+
+        self.console.print(f"📖 Fetching README for {len(targets)} GitHub repo item(s)...")
+
+        headers = {
+            "Accept": "application/vnd.github.raw",
+            "User-Agent": "Horizon-Aggregator",
+        }
+        token = os.getenv("GITHUB_TOKEN")
+        if token:
+            headers["Authorization"] = f"token {token}"
+
+        semaphore = asyncio.Semaphore(GITHUB_README_CONCURRENCY)
+
+        async def fetch_one(client: httpx.AsyncClient, item: ContentItem, owner: str, repo: str) -> None:
+            async with semaphore:
+                try:
+                    response = await client.get(
+                        f"https://api.github.com/repos/{owner}/{repo}/readme",
+                        headers=headers,
+                        timeout=GITHUB_README_TIMEOUT,
+                    )
+                    response.raise_for_status()
+                except httpx.HTTPError as exc:
+                    logger.warning("Failed to fetch README for %s/%s: %s", owner, repo, exc)
+                    return
+
+                readme_text = response.text.strip()
+                if not readme_text:
+                    return
+
+                truncated = readme_text[:GITHUB_README_MAX_CHARS]
+                item.content = (
+                    (item.content or "") + f"\n\n--- README ({owner}/{repo}) ---\n{truncated}"
+                )
+
+        async with httpx.AsyncClient(timeout=GITHUB_README_TIMEOUT) as client:
+            await asyncio.gather(
+                *(fetch_one(client, item, owner, repo) for item, owner, repo in targets)
+            )
 
     async def _analyze_content(self, items: List[ContentItem]) -> List[ContentItem]:
         """Analyze content items with AI.

@@ -20,6 +20,9 @@ from ..models import ContentItem
 _TAG_RE = re.compile(r"<[^>]+>")
 _SPACE_RE = re.compile(r"\s+")
 _MAX_ITEMS = 20
+_ARCHIVE_RETENTION_DAYS = 30
+_ARCHIVE_NAV_DAYS = 7
+_DATE_FILE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.html$")
 
 
 class LocalSiteGenerator:
@@ -37,21 +40,68 @@ class LocalSiteGenerator:
         total_items: int,
         generated_at: datetime | None = None,
     ) -> Path:
-        """Generate ``index.html`` and return its path."""
+        """Generate ``index.html`` (plus a dated archive copy) and return the index path."""
         generated_at = generated_at or datetime.now(timezone.utc)
         selected_items = _sort_items(items)[:_MAX_ITEMS]
+
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        recent_dates = self._recent_archive_dates(date)
+
         html = self.render(
             selected_items,
             date=date,
             total_items=total_items,
             generated_at=generated_at,
+            recent_dates=recent_dates,
         )
         html = _strip_trailing_whitespace(html)
 
-        self.output_dir.mkdir(parents=True, exist_ok=True)
         output_path = self.output_dir / "index.html"
         output_path.write_text(html, encoding="utf-8")
+
+        dated_path = self.output_dir / f"{date}.html"
+        dated_path.write_text(html, encoding="utf-8")
+
+        self._cleanup_old_archives(date)
+
         return output_path
+
+    def _recent_archive_dates(self, current_date: str) -> list[str]:
+        """Return the most recent archive dates (including today) for nav rendering."""
+        dates = {current_date}
+        if self.output_dir.exists():
+            for path in self.output_dir.iterdir():
+                match = _DATE_FILE_RE.match(path.name)
+                if match:
+                    dates.add(match.group(1))
+        return sorted(dates, reverse=True)[:_ARCHIVE_NAV_DAYS]
+
+    def _cleanup_old_archives(
+        self, current_date: str, *, retention_days: int = _ARCHIVE_RETENTION_DAYS
+    ) -> None:
+        """Delete dated archive files older than ``retention_days``.
+
+        Only touches files matching the ``YYYY-MM-DD.html`` naming pattern so
+        ``index.html`` and any other files in the output directory are untouched.
+        """
+        try:
+            cutoff = datetime.strptime(current_date, "%Y-%m-%d") - timedelta(days=retention_days)
+        except ValueError:
+            return
+
+        if not self.output_dir.exists():
+            return
+
+        for path in self.output_dir.iterdir():
+            match = _DATE_FILE_RE.match(path.name)
+            if not match:
+                continue
+            try:
+                file_date = datetime.strptime(match.group(1), "%Y-%m-%d")
+            except ValueError:
+                continue
+            if file_date < cutoff:
+                path.unlink(missing_ok=True)
 
     def render(
         self,
@@ -60,10 +110,12 @@ class LocalSiteGenerator:
         date: str,
         total_items: int,
         generated_at: datetime,
+        recent_dates: Sequence[str] | None = None,
     ) -> str:
         selected_count = len(items)
         display_date = _format_date(date)
         updated_at = _format_datetime(generated_at, self.timezone)
+        days_nav = _render_days_nav(recent_dates or [], date)
         cards = "\n".join(
             self._render_card(index, item) for index, item in enumerate(items, start=1)
         )
@@ -233,6 +285,39 @@ class LocalSiteGenerator:
       font-weight: 800;
     }}
 
+    .days-nav {{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 22px;
+    }}
+
+    .day-link {{
+      padding: 6px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      backdrop-filter: blur(16px) saturate(1.2);
+      -webkit-backdrop-filter: blur(16px) saturate(1.2);
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }}
+
+    a.day-link:hover {{
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--ink);
+    }}
+
+    .day-link-current {{
+      border-color: color-mix(in srgb, var(--blue) 34%, #ffffff);
+      background: color-mix(in srgb, var(--blue) 12%, #ffffff);
+      color: var(--blue);
+    }}
+
     .story-list {{
       display: grid;
       gap: 14px;
@@ -390,6 +475,21 @@ class LocalSiteGenerator:
       border: 1px solid color-mix(in srgb, var(--accent) 24%, #ffffff);
       border-radius: 999px;
       background: color-mix(in srgb, var(--accent) 11%, #ffffff);
+      color: var(--accent);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }}
+
+    .github-stars {{
+      color: var(--amber);
+      font-weight: 800;
+    }}
+
+    .github-lang {{
+      padding: 2px 8px;
+      border: 1px solid color-mix(in srgb, var(--accent) 24%, #ffffff);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 9%, #ffffff);
       color: var(--accent);
       font-size: 0.76rem;
       font-weight: 700;
@@ -596,6 +696,7 @@ class LocalSiteGenerator:
         </div>
       </aside>
     </header>
+    {days_nav}
     <section class="story-list" aria-label="精选内容">
       {cards}
     </section>
@@ -617,6 +718,7 @@ class LocalSiteGenerator:
         tags = _tags(item)
         tags_html = "\n".join(f'<span class="tag">{escape(tag)}</span>' for tag in tags)
         category_html = f'<span class="category">{escape(category)}</span>' if category else ""
+        github_trend_html = _github_trend_meta_html(item)
         personal_note_html = _personal_note_html(item)
 
         return f"""
@@ -630,6 +732,7 @@ class LocalSiteGenerator:
             <span>{escape(published)}</span>
             <span class="meta-dot">·</span>
             <span>评分 {escape(score)}</span>
+            {github_trend_html}
           </div>
           <h2><a href="{escape(str(item.url), quote=True)}" target="_blank" rel="noopener noreferrer">{escape(_clip(title, 118))}</a></h2>
           {personal_note_html}
@@ -641,6 +744,30 @@ class LocalSiteGenerator:
         </div>
       </article>
 """.rstrip()
+
+
+def _render_days_nav(dates: Sequence[str], current_date: str) -> str:
+    """Render the "近 7 天" archive nav bar; empty string if no dates given."""
+    if not dates:
+        return ""
+
+    links = []
+    for day in dates:
+        label = escape(_format_date(day))
+        if day == current_date:
+            links.append(
+                f'<span class="day-link day-link-current" aria-current="date">{label}</span>'
+            )
+        else:
+            links.append(
+                f'<a class="day-link" href="{escape(day)}.html">{label}</a>'
+            )
+
+    return (
+        '<nav class="days-nav" aria-label="近 7 天日报">\n      '
+        + "\n      ".join(links)
+        + "\n    </nav>"
+    )
 
 
 def _load_timezone(timezone_name: str) -> timezone:
@@ -828,6 +955,28 @@ def _source_label(item: ContentItem) -> str:
     if host:
         return host.removeprefix("www.")
     return item.author or item.source_type.value
+
+
+def _github_trend_meta_html(item: ContentItem) -> str:
+    """Render extra ⭐ stars-gained / language chips for OSS Insight trending items.
+
+    Only fires when all three fields OSS Insight writes together are present,
+    which distinguishes trending items from plain GitHub event/repo metadata
+    that only sets ``repo``.
+    """
+    metadata = item.metadata
+    stars_gained = metadata.get("stars_gained")
+    primary_language = metadata.get("primary_language")
+    repo = metadata.get("repo")
+    if stars_gained is None or not primary_language or not repo:
+        return ""
+
+    return (
+        '<span class="meta-dot">·</span>\n'
+        f'            <span class="github-stars">⭐ +{escape(str(stars_gained))}</span>\n'
+        '            <span class="meta-dot">·</span>\n'
+        f'            <span class="github-lang">{escape(str(primary_language))}</span>'
+    )
 
 
 def _category_label(item: ContentItem) -> str:
